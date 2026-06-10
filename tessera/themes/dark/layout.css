@@ -1,0 +1,18 @@
+/* ============================================================
+   dark/layout.css — charcoal VS Code-inspired dark theme
+   ============================================================ */
+
+:root {
+  --sidebar-width:   220px;
+  --toolbar-height:  44px;
+  --color-bg:        #1e1e1e;
+  --color-surface:   #252526;
+  --color-surface2:  #2d2d30;
+  --color-accent:    #7c9cff;
+  --color-text:      #d4d4d4;
+  --color-text-muted:#858585;
+  --color-border:    #3e3e42;
+  --font-sans:       "Segoe UI", system-ui, sans-serif;
+  --font-mono:       "Cascadia Code", "Fira Code", monospace;
+  --radius:          4px;
+}

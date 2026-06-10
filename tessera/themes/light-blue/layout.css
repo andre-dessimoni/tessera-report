@@ -1,0 +1,18 @@
+/* ============================================================
+   light-blue/layout.css — corporate blue-tinted light theme
+   ============================================================ */
+
+:root {
+  --sidebar-width:   220px;
+  --toolbar-height:  44px;
+  --color-bg:        #eff6ff;
+  --color-surface:   #ffffff;
+  --color-surface2:  #dbeafe;
+  --color-accent:    #1d4ed8;
+  --color-text:      #1e3a5f;
+  --color-text-muted:#6380a8;
+  --color-border:    #bfdbfe;
+  --font-sans:       "Segoe UI", system-ui, sans-serif;
+  --font-mono:       "Fira Code", "Cascadia Code", monospace;
+  --radius:          8px;
+}

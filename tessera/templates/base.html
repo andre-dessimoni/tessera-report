@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author"  content="{{ deck.author }}">
+  <meta name="version" content="{{ deck.version }}">
+  <meta name="date"    content="{{ deck.date }}">
+  <title>{{ deck.title }}</title>
+  <style>
+{{ css }}
+  </style>
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<nav id="sidebar">
+  <div id="sidebar-header">{{ deck.title }}</div>
+  <ul id="slide-list">
+    {% for item in rendered_slides %}
+    {% set slide = item.slide %}
+    <li class="sidebar-item sidebar-type-{{ slide.slide_type }}"
+        data-target="{{ slide.slide_id }}"
+        onclick="goToSlide('{{ slide.slide_id }}')">
+      <span class="sidebar-num">{{ loop.index }}</span>
+      <span class="sidebar-title">{{ slide.title }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+
+<!-- ===================== MAIN AREA ===================== -->
+<main id="main">
+  {% for item in rendered_slides %}
+  {% set slide = item.slide %}
+  <section
+    id="{{ slide.slide_id }}"
+    class="slide slide-type-{{ slide.slide_type }}"
+    data-index="{{ loop.index }}"
+    style="
+      grid-template-rows: {{ slide.row_heights | join(' ') }};
+      grid-template-columns: {{ slide.col_widths | join(' ') }};
+    "
+  >
+    <!-- Slide header -->
+    <header class="slide-header">
+      <h1 class="slide-title">{{ slide.title }}</h1>
+      {% if slide.subtitle %}
+      <p class="slide-subtitle">{{ slide.subtitle }}</p>
+      {% endif %}
+    </header>
+
+    <!-- Canvas: rendered cells -->
+    <div class="slide-canvas"
+      style="
+        grid-template-rows: {{ slide.row_heights | join(' ') }};
+        grid-template-columns: {{ slide.col_widths | join(' ') }};
+      "
+    >
+      {% for cell_html in item.rendered_cells %}
+      {{ cell_html }}
+      {% endfor %}
+    </div>
+
+    <!-- Presenter notes -->
+    {% if slide.notes %}
+    <aside class="slide-notes">{{ slide.notes }}</aside>
+    {% endif %}
+  </section>
+  {% endfor %}
+</main>
+
+<!-- ===================== BOTTOM TOOLBAR ===================== -->
+<footer id="toolbar">
+  <button id="btn-prev" onclick="navigate(-1)" title="Previous slide (←)">&#9664;</button>
+  <span id="slide-counter">
+    <input id="slide-input" type="number" min="1" max="{{ rendered_slides|length }}" value="1"
+           onchange="goToIndex(parseInt(this.value))" />
+    <span>/ {{ rendered_slides|length }}</span>
+  </span>
+  <button id="btn-next" onclick="navigate(1)" title="Next slide (→)">&#9654;</button>
+  <button id="btn-print" onclick="window.print()" title="Print / Save as PDF">&#128438;</button>
+  <button id="btn-fullscreen" onclick="toggleFullscreen()" title="Fullscreen (F)">&#x26F6;</button>
+  <button id="btn-overview" onclick="toggleOverview()" title="Overview (G)">&#9783;</button>
+</footer>
+
+<!-- ===================== OVERVIEW ===================== -->
+<div id="overview" class="hidden">
+  {% for item in rendered_slides %}
+  {% set slide = item.slide %}
+  <div class="overview-thumb" onclick="goToSlide('{{ slide.slide_id }}'); toggleOverview()">
+    <span class="overview-num">{{ loop.index }}</span>
+    <span class="overview-title">{{ slide.title }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ===================== MODAL (expand) ===================== -->
+<div id="modal" class="hidden" onclick="closeModal()">
+  <div id="modal-content" onclick="event.stopPropagation()">
+    <button id="modal-close" onclick="closeModal()">&#10005;</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ===================== LIGHTBOX ===================== -->
+<div id="lightbox" class="hidden" onclick="closeLightbox()">
+  <div id="lightbox-inner" onclick="event.stopPropagation()">
+    <button id="lightbox-close" onclick="closeLightbox()" title="Close">&#10005;</button>
+    <button id="lightbox-reset-zoom" onclick="lbResetZoom()" title="Reset zoom">&#x2B55;</button>
+    <button id="lightbox-prev" onclick="lbNavThumb(-1)" title="Previous">&#8249;</button>
+    <button id="lightbox-next" onclick="lbNavThumb(1)" title="Next">&#8250;</button>
+    <div id="lightbox-img-wrap">
+      <img id="lightbox-img" src="" alt="" draggable="false" />
+    </div>
+    <div id="lightbox-thumbs"></div>
+  </div>
+</div>
+
+<!-- ===================== PLUGINS ===================== -->
+{% if "plotly" in plugin_names %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+{% endif %}
+{% if "highlight" in plugin_names %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+{% endif %}
+{% if "mermaid" in plugin_names %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+{% endif %}
+
+<!-- ===================== JS ===================== -->
+<script>
+{{ main_js }}
+</script>
+
+{% if "highlight" in plugin_names %}
+<script>hljs.highlightAll();</script>
+{% endif %}
+{% if "mermaid" in plugin_names %}
+<script>mermaid.initialize({ startOnLoad: false, theme: "dark" });</script>
+{% endif %}
+
+</body>
+</html>

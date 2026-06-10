@@ -1,0 +1,24 @@
+<div class="cell cell-plotly cell-clip{% if cell.params.transparent %} cell-transparent{% endif %}
+  cell-halign-{{ cell.params.halign }} cell-valign-{{ cell.params.valign }}"
+  style="
+    grid-column: {{ cell.params.col }} / span {{ cell.params.colspan }};
+    grid-row:    {{ cell.params.row }} / span {{ cell.params.rowspan }};
+  "
+>
+  {% if cell.params.expand_button %}
+  <div class="cell-actions">
+    <button class="btn-action" onclick="expandPlotly(this)" title="Expandir">&#x26F6;</button>
+  </div>
+  {% endif %}
+
+  <div class="cell-body plotly-body" id="plotly-{{ cell.params.col }}-{{ cell.params.row }}">
+    <div
+      class="plotly-container"
+      data-fig="{{ cell.fig_json | e }}"
+    ></div>
+  </div>
+
+  {% if cell.params.caption %}
+  <p class="cell-caption">{{ cell.params.caption }}</p>
+  {% endif %}
+</div>

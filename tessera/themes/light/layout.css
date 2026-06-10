@@ -1,0 +1,18 @@
+/* ============================================================
+   light/layout.css — clean professional light theme
+   ============================================================ */
+
+:root {
+  --sidebar-width:   220px;
+  --toolbar-height:  44px;
+  --color-bg:        #f4f4f5;
+  --color-surface:   #ffffff;
+  --color-surface2:  #f1f1f3;
+  --color-accent:    #2563eb;
+  --color-text:      #18181b;
+  --color-text-muted:#71717a;
+  --color-border:    #e4e4e7;
+  --font-sans:       "Segoe UI", system-ui, sans-serif;
+  --font-mono:       "Fira Code", "Cascadia Code", monospace;
+  --radius:          6px;
+}

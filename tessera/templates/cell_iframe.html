@@ -1,0 +1,27 @@
+<div class="cell cell-iframe cell-clip{% if cell.params.transparent %} cell-transparent{% endif %}
+  cell-halign-{{ cell.params.halign }} cell-valign-{{ cell.params.valign }}"
+  style="
+    grid-column: {{ cell.params.col }} / span {{ cell.params.colspan }};
+    grid-row:    {{ cell.params.row }} / span {{ cell.params.rowspan }};
+  "
+>
+  {% if cell.params.expand_button %}
+  <div class="cell-actions">
+    <button class="btn-action" onclick="expandCell(this)" title="Expandir">&#x26F6;</button>
+  </div>
+  {% endif %}
+
+  <div class="cell-body iframe-body">
+    <iframe
+      src="{{ cell.url }}"
+      class="hs-iframe"
+      loading="lazy"
+      allowfullscreen
+      sandbox="allow-scripts allow-same-origin allow-forms"
+    ></iframe>
+  </div>
+
+  {% if cell.params.caption %}
+  <p class="cell-caption">{{ cell.params.caption }}</p>
+  {% endif %}
+</div>

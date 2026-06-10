@@ -1,0 +1,18 @@
+/* ============================================================
+   academic/layout.css — scholarly serif theme
+   ============================================================ */
+
+:root {
+  --sidebar-width:   220px;
+  --toolbar-height:  44px;
+  --color-bg:        #fafaf8;
+  --color-surface:   #ffffff;
+  --color-surface2:  #f5f5f1;
+  --color-accent:    #1a3a5c;
+  --color-text:      #1a1a1a;
+  --color-text-muted:#666666;
+  --color-border:    #d8d8d0;
+  --font-sans:       Georgia, "Times New Roman", serif;
+  --font-mono:       "Courier New", Courier, monospace;
+  --radius:          2px;
+}

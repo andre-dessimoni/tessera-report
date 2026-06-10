@@ -1,0 +1,11 @@
+/* ============================================================
+   academic/metric.css — delta colours for light background
+   ============================================================ */
+
+.metric-label {
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+}
+
+.delta-positive { color: #166534; }
+.delta-negative { color: #991b1b; }

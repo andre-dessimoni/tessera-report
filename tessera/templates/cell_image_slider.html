@@ -1,0 +1,48 @@
+<div class="cell cell-image-slider cell-clip{% if cell.params.transparent %} cell-transparent{% endif %}
+  cell-halign-{{ cell.params.halign }} cell-valign-{{ cell.params.valign }}"
+  style="
+    grid-column: {{ cell.params.col }} / span {{ cell.params.colspan }};
+    grid-row:    {{ cell.params.row }} / span {{ cell.params.rowspan }};
+  "
+  data-slider-id="slider-{{ cell.params.col }}-{{ cell.params.row }}"
+>
+  {% if cell.params.expand_button %}
+  <div class="cell-actions">
+    <button class="btn-action" onclick="expandCell(this)" title="Expandir">&#x26F6;</button>
+  </div>
+  {% endif %}
+
+  <div class="cell-body slider-body">
+    <div class="slider-track" id="slider-{{ cell.params.col }}-{{ cell.params.row }}">
+      {% for src in cell.resolved_srcs %}
+      <div class="slider-slide">
+        <img
+          class="slider-img lightbox-trigger"
+          src="{{ src }}"
+          alt="{{ cell.captions[loop.index0] if cell.captions else '' }}"
+          data-slide-index="{{ loop.index0 }}"
+          data-slider-id="slider-{{ cell.params.col }}-{{ cell.params.row }}"
+          onclick="openLightboxFromSlider(this)"
+        />
+        {% if cell.captions and cell.captions[loop.index0] %}
+        <p class="slider-caption">{{ cell.captions[loop.index0] }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if cell.resolved_srcs | length > 1 %}
+    <button class="slider-btn slider-prev" onclick="sliderNav(this, -1)" aria-label="Anterior">&#8249;</button>
+    <button class="slider-btn slider-next" onclick="sliderNav(this, 1)" aria-label="Próximo">&#8250;</button>
+    <div class="slider-dots">
+      {% for src in cell.resolved_srcs %}
+      <span class="slider-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}"></span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if cell.params.caption %}
+  <p class="cell-caption">{{ cell.params.caption }}</p>
+  {% endif %}
+</div>

@@ -1,0 +1,38 @@
+/* ============================================================
+   table.css
+   ============================================================ */
+
+.table-body {
+  overflow: auto;
+}
+
+.hs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.hs-table thead th {
+  background: var(--color-surface2);
+  color: var(--color-text);
+  font-weight: 600;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 2px solid var(--color-accent);
+  white-space: nowrap;
+}
+
+.hs-table tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: top;
+}
+
+.hs-table tbody tr.row-even {
+  background: rgba(255,255,255,0.03);
+}
+
+.hs-table tbody tr:hover {
+  background: var(--color-surface2);
+}

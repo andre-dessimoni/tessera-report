@@ -1,0 +1,7 @@
+<div class="cell cell-empty{% if cell.params.transparent %} cell-transparent{% endif %}
+  cell-halign-{{ cell.params.halign }} cell-valign-{{ cell.params.valign }}"
+  style="
+    grid-column: {{ cell.params.col }} / span {{ cell.params.colspan }};
+    grid-row:    {{ cell.params.row }} / span {{ cell.params.rowspan }};
+  "
+></div>

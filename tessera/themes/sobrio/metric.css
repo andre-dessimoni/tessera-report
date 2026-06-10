@@ -1,0 +1,11 @@
+/* ============================================================
+   sobrio/metric.css — delta colours for light background
+   ============================================================ */
+
+.metric-value {
+  font-weight: 300;
+  letter-spacing: -0.04em;
+}
+
+.delta-positive { color: #15803d; }
+.delta-negative { color: #dc2626; }

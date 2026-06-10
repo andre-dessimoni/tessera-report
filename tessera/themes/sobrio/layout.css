@@ -1,0 +1,18 @@
+/* ============================================================
+   sobrio/layout.css — minimalist, borderless, generous whitespace
+   ============================================================ */
+
+:root {
+  --sidebar-width:   220px;
+  --toolbar-height:  44px;
+  --color-bg:        #ffffff;
+  --color-surface:   #f9f9f9;
+  --color-surface2:  #f0f0f0;
+  --color-accent:    #171717;
+  --color-text:      #171717;
+  --color-text-muted:#a3a3a3;
+  --color-border:    #ebebeb;
+  --font-sans:       "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono:       "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  --radius:          10px;
+}

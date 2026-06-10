@@ -1,0 +1,212 @@
+"""
+tessera.cells.base
+==================
+Defines the _UNSET sentinel, CellParams, the abstract Cell base class,
+and the @cell_method decorator. All concrete subtypes import from here.
+"""
+
+from __future__ import annotations
+
+import functools
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Literal
+
+# Importing jinja2 and Slide only for type annotations, to avoid circular 
+# imports and heavy dependencies at runtime
+if TYPE_CHECKING:
+    import jinja2
+    from tessera.core.slide import Slide
+
+
+# ---------------------------------------------------------------------------
+# Sentinel
+# ---------------------------------------------------------------------------
+
+class _UnsetType:
+    """Singleton sentinel — indicates the argument was not passed by the 
+    caller."""
+
+    _instance: "_UnsetType | None" = None
+
+    def __new__(cls) -> "_UnsetType":
+        """Ensures only one instance of _UnsetType exists.
+        
+        Trying to create another instance will return the existing one.
+        """
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __repr__(self) -> str:
+        return "<UNSET>"
+
+
+_UNSET = _UnsetType()
+
+
+# ---------------------------------------------------------------------------
+# CellParams
+# ---------------------------------------------------------------------------
+
+@dataclass
+class CellParams:
+    """
+    Common parameters for all cells, already resolved by @cell_method
+    (defaults applied, position determined, validation complete).
+    """
+    col:           int
+    row:           int
+    colspan:       int   = 1
+    rowspan:       int   = 1
+    caption:       str   = ""
+    overflow:      bool  = True
+    copy_button:   bool  = False
+    expand_button: bool  = False
+    transparent:   bool  = False
+    halign:        Literal["left", "center", "right"] = "left"
+    valign:        Literal["top", "middle", "bottom"] = "top"
+
+
+# ---------------------------------------------------------------------------
+# Cell — abstract base class
+# ---------------------------------------------------------------------------
+
+class Cell(ABC):
+    """
+    Base class for all cells. Every concrete subtype must implement
+    ``render()``, which returns the cell's HTML fragment.
+    """
+
+    def __init__(self, params: CellParams) -> None:
+        self.params = params
+
+    @abstractmethod
+    def render(self, env: "jinja2.Environment") -> str:
+        """Renders and returns the cell's HTML fragment."""
+        ...
+
+    @property
+    def col(self) -> int:
+        return self.params.col
+
+    @property
+    def row(self) -> int:
+        return self.params.row
+
+    @property
+    def colspan(self) -> int:
+        return self.params.colspan
+
+    @property
+    def rowspan(self) -> int:
+        return self.params.rowspan
+
+
+# ---------------------------------------------------------------------------
+# @cell_method — decorator
+# ---------------------------------------------------------------------------
+
+def cell_method(fn: Callable[..., Cell]) -> Callable[..., Cell]:
+    """
+    Decorator applied to all ``add_*`` methods of ``Slide``.
+
+    Responsibilities (in order):
+    1. Extract common parameters from **kwargs
+    2. Merge with CellDefaults (replace _UNSET with the global default)
+    3. Resolve col/row = None → next available cell position
+    4. Validate col/row within canvas range (1-indexed)
+    5. Validate colspan/rowspan within canvas bounds
+    6. Detect collision with already-allocated cells
+    7. Call the decorated method to construct the cell
+    8. Register occupied positions on the Slide's internal map
+    9. Ensure the return value is a Cell instance
+    """
+
+    @functools.wraps(fn)
+    def wrapper(slide: "Slide", *args: Any, **kwargs: Any) -> Cell:
+        # --- 1. Extract common parameters ---
+        col      = kwargs.pop("col",      None)
+        row      = kwargs.pop("row",      None)
+        colspan  = kwargs.pop("colspan",  1)
+        rowspan  = kwargs.pop("rowspan",  1)
+        caption  = kwargs.pop("caption",  "")
+
+        overflow      = kwargs.pop("overflow",      _UNSET)
+        copy_button   = kwargs.pop("copy_button",   _UNSET)
+        expand_button = kwargs.pop("expand_button", _UNSET)
+        transparent   = kwargs.pop("transparent",   _UNSET)
+        halign        = kwargs.pop("halign",        _UNSET)
+        valign        = kwargs.pop("valign",        _UNSET)
+
+        # --- 2. Merge with CellDefaults ---
+        cd = slide._cell_defaults
+        if overflow      is _UNSET:
+            overflow      = cd.overflow
+        if copy_button   is _UNSET:
+            copy_button   = cd.copy_button
+        if expand_button is _UNSET:
+            expand_button = cd.expand_button
+        if transparent   is _UNSET:
+            transparent   = cd.transparent
+        if halign is _UNSET:
+            halign = cd.halign
+        if valign is _UNSET:
+            valign = cd.valign
+
+        # --- 3. Resolve position ---
+        col, row = slide._resolve_position(col, row, colspan, rowspan)
+
+        # --- 4-6. Validate ---
+        _validate_placement(slide, col, row, colspan, rowspan)
+
+        # --- 7. Build cell ---
+        kwargs["_params"] = CellParams(
+            col=col, row=row,
+            colspan=colspan, rowspan=rowspan,
+            caption=caption,
+            overflow=overflow,
+            copy_button=copy_button,
+            expand_button=expand_button,
+            transparent=transparent,
+            halign=halign,
+            valign=valign,
+        )
+        cell = fn(slide, *args, **kwargs)
+
+        # --- 8-9. Register and validate return ---
+        if not isinstance(cell, Cell):
+            raise TypeError(
+                f"{fn.__name__} must return a Cell instance, "
+                f"but returned {type(cell).__name__}"
+            )
+        slide._register_cell(cell)
+        return cell
+
+    return wrapper
+
+
+def _validate_placement(
+    slide: "Slide",
+    col: int, row: int,
+    colspan: int, rowspan: int,
+) -> None:
+    from tessera.exceptions import CellPlacementError
+
+    nrows, ncols = slide.nrows, slide.ncols
+
+    if not (1 <= col <= ncols):
+        raise CellPlacementError(f"col={col} out of canvas range (1-{ncols})")
+    if not (1 <= row <= nrows):
+        raise CellPlacementError(f"row={row} out of canvas range (1-{nrows})")
+    if col + colspan - 1 > ncols:
+        raise CellPlacementError(f"col={col} + colspan={colspan} exceeds ncols={ncols}")
+    if row + rowspan - 1 > nrows:
+        raise CellPlacementError(f"row={row} + rowspan={rowspan} exceeds nrows={nrows}")
+
+    for r in range(row, row + rowspan):
+        for c in range(col, col + colspan):
+            if slide._occupied[r - 1][c - 1]:
+                raise CellPlacementError(
+                    f"Position (row={r}, col={c}) is already occupied by another cell"
+                )

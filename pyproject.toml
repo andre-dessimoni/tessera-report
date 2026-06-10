@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tessera-slides"
+version = "0.1.0"
+description = "Generate self-contained HTML slideshows for technical documents"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "André Rezende Dessimoni Carvalho", email = "andre.rdc@outlook.com" },
+]
+keywords = [
+    "slides", "html", "presentation", "report", "dashboard",
+    "plotly", "mermaid", "self-contained",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Documentation",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Text Processing :: Markup :: HTML",
+]
+dependencies = [
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+markdown = ["markdown-it-py>=3.0"]
+plotly   = ["plotly>=5.0"]
+pandas   = ["pandas>=1.5"]
+full     = ["markdown-it-py>=3.0", "plotly>=5.0", "pandas>=1.5"]
+dev      = ["pytest>=8.0", "pytest-cov", "ruff>=0.4", "mypy>=1.10", "build", "twine"]
+
+[project.urls]
+Homepage   = "https://github.com/andre-dessimoni/tessera-slides"
+Repository = "https://github.com/andre-dessimoni/tessera-slides"
+Issues     = "https://github.com/andre-dessimoni/tessera-slides/issues"
+
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["tessera*"]
+
+[tool.setuptools.package-data]
+"tessera" = [
+    "templates/*.html",
+    "themes/**/*.css",
+    "static/*.js",
+    "py.typed",
+]
+"tessera.themes.default"    = ["*.css"]
+"tessera.themes.light"      = ["*.css"]
+"tessera.themes.dark"       = ["*.css"]
+"tessera.themes.light-blue" = ["*.css"]
+"tessera.themes.academic"   = ["*.css"]
+"tessera.themes.sobrio"     = ["*.css"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts   = "-v"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.mypy]
+python_version = "3.9"
+strict = false
+ignore_missing_imports = true

@@ -1,0 +1,6 @@
+/* ============================================================
+   light/metric.css — delta colours with contrast for light bg
+   ============================================================ */
+
+.delta-positive { color: #16a34a; }
+.delta-negative { color: #dc2626; }
