@@ -262,5 +262,5 @@ slide7.add_text(
     transparent=False
 )
 # -- Generate ------------------------------------------------------------------
-output = slides.write("_static/example", open_browser=False)
+output = slides.write("_static/demo", open_browser=False)
 print(f"Generated: {output.resolve()}")
