@@ -142,5 +142,5 @@ slide.add_table(df.query('continent=="Americas"'),
                 expand_button=True, overflow=False)
 
 # -----------------------------------------------------------------------------
-slides.write('../../_build/_static/example1.html')
+slides.write('../../_static/example1.html')
 print('done')
