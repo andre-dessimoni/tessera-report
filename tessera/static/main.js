@@ -10,6 +10,7 @@
   // -- State -----------------------------------------------
   const slides = Array.from(document.querySelectorAll(".slide"));
   let current = 0;
+  var _savedSidebarWidth = "220px";
 
   // -- Initialisation -------------------------------------
   function init() {
@@ -26,6 +27,7 @@
     initPlotlyCharts();
     initSliders();
     initLightbox();
+    initSidebar();
   }
 
   // -- Navigation -----------------------------------------
@@ -89,7 +91,8 @@
       case "ArrowRight": case "ArrowDown":  navigate(1);  break;
       case "ArrowLeft":  case "ArrowUp":    navigate(-1); break;
       case "f": case "F": toggleFullscreen(); break;
-      case "g": case "G": case "Escape":   toggleOverview(); break;
+      case "g": case "G": toggleOverview(); break;
+      case "b": case "B": toggleSidebar(); break;
     }
   }
 
@@ -341,6 +344,67 @@
     });
   }
 
+  // -- Sidebar toggle & resize ----------------------------
+  var _sbMinWidth = 120;
+  var _sbMaxWidth = 480;
+
+  function initSidebar() {
+    var saved = localStorage.getItem("tessera-sb-width");
+    if (saved) {
+      var w = parseInt(saved, 10);
+      if (w >= _sbMinWidth && w <= _sbMaxWidth) {
+        _savedSidebarWidth = w + "px";
+        document.documentElement.style.setProperty("--sidebar-width", _savedSidebarWidth);
+      }
+    }
+    if (localStorage.getItem("tessera-sb-collapsed") === "1") {
+      document.documentElement.style.setProperty("--sidebar-width", "0px");
+      document.body.classList.add("sb-collapsed");
+    }
+
+    var handle = document.getElementById("sidebar-resize-handle");
+    if (!handle) return;
+
+    handle.addEventListener("mousedown", function (e) {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      handle.classList.add("dragging");
+      document.body.classList.add("sb-no-transition");
+
+      function onMove(e) {
+        var w = Math.max(_sbMinWidth, Math.min(_sbMaxWidth, e.clientX));
+        document.documentElement.style.setProperty("--sidebar-width", w + "px");
+      }
+
+      function onUp() {
+        handle.classList.remove("dragging");
+        document.body.classList.remove("sb-no-transition");
+        var w = getComputedStyle(document.documentElement)
+          .getPropertyValue("--sidebar-width").trim();
+        _savedSidebarWidth = w;
+        localStorage.setItem("tessera-sb-width", parseInt(w, 10));
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      }
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  }
+
+  function toggleSidebar() {
+    var collapsed = document.body.classList.toggle("sb-collapsed");
+    if (collapsed) {
+      var current = getComputedStyle(document.documentElement)
+        .getPropertyValue("--sidebar-width").trim();
+      if (parseInt(current, 10) > 0) _savedSidebarWidth = current;
+      document.documentElement.style.setProperty("--sidebar-width", "0px");
+    } else {
+      document.documentElement.style.setProperty("--sidebar-width", _savedSidebarWidth);
+    }
+    localStorage.setItem("tessera-sb-collapsed", collapsed ? "1" : "0");
+  }
+
   // -- Copy -----------------------------------------------
   function copyCell(btn) {
     var cell = btn.closest(".cell");
@@ -398,6 +462,7 @@
   }
 
   // -- Expose global functions ----------------------------
+  window.toggleSidebar         = toggleSidebar;
   window.navigate              = navigate;
   window.goToSlide             = goToSlide;
   window.goToIndex             = goToIndex;

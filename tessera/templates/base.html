@@ -28,6 +28,7 @@
     {% endfor %}
   </ul>
 </nav>
+<div id="sidebar-resize-handle"></div>
 
 <!-- ===================== MAIN AREA ===================== -->
 <main id="main">
@@ -72,6 +73,7 @@
 
 <!-- ===================== BOTTOM TOOLBAR ===================== -->
 <footer id="toolbar">
+  <button id="btn-sidebar" onclick="toggleSidebar()" title="Toggle sidebar (B)">&#9776;</button>
   <button id="btn-prev" onclick="navigate(-1)" title="Previous slide (←)">&#9664;</button>
   <span id="slide-counter">
     <input id="slide-input" type="number" min="1" max="{{ rendered_slides|length }}" value="1"
@@ -79,9 +81,9 @@
     <span>/ {{ rendered_slides|length }}</span>
   </span>
   <button id="btn-next" onclick="navigate(1)" title="Next slide (→)">&#9654;</button>
-  <button id="btn-print" onclick="window.print()" title="Print / Save as PDF">&#128438;</button>
+  {# <button id="btn-print" onclick="window.print()" title="Print / Save as PDF">&#128438;</button> #}
   <button id="btn-fullscreen" onclick="toggleFullscreen()" title="Fullscreen (F)">&#x26F6;</button>
-  <button id="btn-overview" onclick="toggleOverview()" title="Overview (G)">&#9783;</button>
+  {# <button id="btn-overview" onclick="toggleOverview()" title="Overview (G)">&#9783;</button> #}
 </footer>
 
 <!-- ===================== OVERVIEW ===================== -->
