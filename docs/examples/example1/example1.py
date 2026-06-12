@@ -13,7 +13,8 @@ slides = HTMLSlides(
         Plugin('mathjax', 'cdn'), 
         Plugin('highlight'),
         Plugin('plotly', 'cdn')
-    ]
+    ],
+    theme='dark'
 )
 
 # -----------------------------------------------------------------------------
@@ -27,7 +28,7 @@ slide = slides.add_slide(
     col_widths=['20%', '20%', '20%', '40%']
 )
 
-slide.add_image('figs/c08c-isoq10-iso.png', row=1, col=1, caption='Cylinder without strake')
+slide.add_image('figs/c08c-isoq10-iso.png', row=1, col=1, caption='Original Cylinder without strakes')
 slide.add_image('figs/s05c-isoq10-iso.png', row=1, col=2, caption='Cylinder with strake a')
 slide.add_image('figs/s08c-isoq10-iso.png', row=1, col=3, caption='Cylinder with strake b')
 
@@ -44,20 +45,20 @@ LaTeX for math equations like $f_n=\\sqrt{k/m}$.
 """, row=1, col=4, rowspan=2)
 
 slide.add_metric(value=0.750,  
-    label=r"Displacement / Diameter", 
+    label=r"Max Displacement / Diameter", 
     delta_label="Reference - clylinder")
 slide.add_metric(value=0.250,  
-    label=r"Displacement / Diameter", 
-    delta=-66, 
-    delta_label="% Compared to cylinder without strake")
+    label=r"Max Displacement / Diameter", 
+    delta=-66, lower_is_better=True,
+    delta_label="% Compared to original cylinder")
 slide.add_metric(value=0.125,  
-    label=r"Displacement / Diameter", 
-    delta=-75,
-    delta_label="% Compared to cylinder without strake")
+    label=r"Max Displacement / Diameter", 
+    delta=-75, lower_is_better=True,
+    delta_label="% Compared to original cylinder")
 
 slide.add_text(
     'Reference: [Dessimoni, A. (2021)](http://doi.org/10.14393/ufu.di.2021.415).  '
-    'Modelagem e aplicação de métodos de fronteira imersa para análise de'
+    'Modelagem e aplicação de métodos de fronteira imersa para análise de '
     'escoamentos sobre atenuadores de VIV (Master\'s thesis, '
     'Universidade Federal de Uberlândia).',
     row=3, col=1, colspan=4
@@ -82,8 +83,11 @@ slide.add_code("""for f in range(4):
     
     fig, ax = plt.subplots()
     ax.plot(x, y)
+    
+    # --- Add matplotlib fig to cell
+ 
     slide.add_matplotlib(
-        fig, fmt="svg", 
+        fig, fmt="png", 
         caption=f"$f={f}Hz$", 
         row=i, col=j
     )
@@ -100,6 +104,7 @@ for f in range(4):
     
     fig, ax = plt.subplots()
     ax.plot(x, y)
+
     slide.add_matplotlib(
         fig, fmt="png", 
         caption=f"$f={f}Hz$", 
