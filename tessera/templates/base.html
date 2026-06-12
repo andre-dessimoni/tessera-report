@@ -128,6 +128,15 @@
 {% if "mermaid" in plugin_names %}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 {% endif %}
+{% if "mathjax" in plugin_names %}
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]], displayMath: [["$$", "$$"], ["\\[", "\\]"]] },
+  options: { skipHtmlTags: ["script", "noscript", "style", "textarea"] },
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+{% endif %}
 
 <!-- ===================== JS ===================== -->
 <script>
@@ -139,6 +148,13 @@
 {% endif %}
 {% if "mermaid" in plugin_names %}
 <script>mermaid.initialize({ startOnLoad: false, theme: "dark" });</script>
+{% endif %}
+{% if "mathjax" in plugin_names %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+});
+</script>
 {% endif %}
 
 </body>
