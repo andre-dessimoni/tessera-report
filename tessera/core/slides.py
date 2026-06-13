@@ -321,6 +321,19 @@ class HTMLSlides:
         slide = self._slide_map.pop(slide_id)
         self._slides.remove(slide)
 
+
+    def get_slide(
+        self,
+        slide_id: Hashable,
+    ):
+        """Get a slide by its ID."""
+        if slide_id not in self._slide_map:
+            raise KeyError(
+                f"No slide found with ID: {slide_id}. Available slide IDs:\n- "
+                + '\n- '.join([f'{k}: {v}' for k, v in self._slide_map.items()])
+                + '\n')
+        return self._slide_map[slide_id]
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
