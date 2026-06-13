@@ -10,7 +10,7 @@ from __future__ import annotations
 import functools
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable, Literal, Hashable
 
 # Importing jinja2 and Slide only for type annotations, to avoid circular 
 # imports and heavy dependencies at runtime
@@ -57,6 +57,7 @@ class CellParams:
     """
     col:           int
     row:           int
+    cell_id:       Hashable
     colspan:       int   = 1
     rowspan:       int   = 1
     caption:       str   = ""
@@ -66,7 +67,6 @@ class CellParams:
     transparent:   bool  = False
     halign:        Literal["left", "center", "right"] = "left"
     valign:        Literal["top", "middle", "bottom"] = "top"
-
 
 # ---------------------------------------------------------------------------
 # Cell — abstract base class
@@ -114,13 +114,14 @@ def cell_method(fn: Callable[..., Cell]) -> Callable[..., Cell]:
     Responsibilities (in order):
     1. Extract common parameters from **kwargs
     2. Merge with CellDefaults (replace _UNSET with the global default)
-    3. Resolve col/row = None → next available cell position
+    3. Resolve cell_id and position (col/row) if not provided
     4. Validate col/row within canvas range (1-indexed)
     5. Validate colspan/rowspan within canvas bounds
     6. Detect collision with already-allocated cells
     7. Call the decorated method to construct the cell
     8. Register occupied positions on the Slide's internal map
     9. Ensure the return value is a Cell instance
+    10. Autosave if Slide.parent.autosave_level == 'cell'
     """
 
     @functools.wraps(fn)
@@ -138,6 +139,11 @@ def cell_method(fn: Callable[..., Cell]) -> Callable[..., Cell]:
         transparent   = kwargs.pop("transparent",   _UNSET)
         halign        = kwargs.pop("halign",        _UNSET)
         valign        = kwargs.pop("valign",        _UNSET)
+        cell_id       = kwargs.pop("cell_id",       _UNSET)
+
+        if cell_id is _UNSET:
+            cell_id = f'_cell-{slide._next_cell_id}'
+            slide._next_cell_id += 1
 
         # --- 2. Merge with CellDefaults ---
         cd = slide._cell_defaults
@@ -155,6 +161,11 @@ def cell_method(fn: Callable[..., Cell]) -> Callable[..., Cell]:
             valign = cd.valign
 
         # --- 3. Resolve position ---
+        # If cell_id already exists, we treat this as an update to an existing cell,
+        # so we keep the same position and just replace the content.
+        if cell_id in slide.cell_map:
+            slide.remove_cell(cell_id=cell_id, _caller_is_cell_method=True)
+
         col, row = slide._resolve_position(col, row, colspan, rowspan)
 
         # --- 4-6. Validate ---
@@ -162,7 +173,7 @@ def cell_method(fn: Callable[..., Cell]) -> Callable[..., Cell]:
 
         # --- 7. Build cell ---
         kwargs["_params"] = CellParams(
-            col=col, row=row,
+            col=col, row=row, cell_id=cell_id,
             colspan=colspan, rowspan=rowspan,
             caption=caption,
             overflow=overflow,
@@ -180,7 +191,13 @@ def cell_method(fn: Callable[..., Cell]) -> Callable[..., Cell]:
                 f"{fn.__name__} must return a Cell instance, "
                 f"but returned {type(cell).__name__}"
             )
-        slide._register_cell(cell)
+
+        slide._register_cell(cell, cell_id=cell_id)
+
+        # --- 10. Autosave if level cell
+        if slide.parent.autosave and slide.parent.autosave_level == 'cell':
+            slide.parent.write(slide.parent.autosave)
+
         return cell
 
     return wrapper

@@ -59,7 +59,7 @@ class Assembler:
         if deck.self_contained:
             from tessera.utils.image_encoder import encode
             for slide in deck._slides:
-                for cell in slide.cells:
+                for cell in slide._cells:
                     if isinstance(cell, ImageCell) and not cell.resolved_src:
                         try:
                             cell.resolved_src = encode(cell.source)
@@ -75,7 +75,7 @@ class Assembler:
                         cell.resolved_srcs = srcs
         else:
             for slide in deck._slides:
-                for cell in slide.cells:
+                for cell in slide._cells:
                     if isinstance(cell, ImageCell) and not cell.resolved_src:
                         cell.resolved_src = str(cell.source)
                     elif isinstance(cell, ImageSliderCell) and not cell.resolved_srcs:
@@ -84,7 +84,7 @@ class Assembler:
         # Render cells
         rendered_slides = []
         for slide in deck._slides:
-            rendered_cells = [cell.render(self._env) for cell in slide.cells]
+            rendered_cells = [cell.render(self._env) for cell in slide._cells]
             rendered_slides.append({
                 "slide": slide,
                 "rendered_cells": rendered_cells,

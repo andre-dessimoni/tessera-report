@@ -9,7 +9,7 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Hashable
 
 from tessera.cells import _UNSET
 from tessera.core.slide import Slide
@@ -61,6 +61,27 @@ class HTMLSlides:
     """
     Main container for a slideshow.
 
+    Arguments:
+        title (str):    The presentation title (required).
+        author (str):   The presentation author (optional).
+        date (str):     The presentation date (optional, defaults to today).
+        version (str):  The presentation version (optional).
+        theme (str):    
+        custom_css (str | Path | None): Optional path to a custom CSS file to include.
+        self_contained (bool): Whether to produce a self-contained HTML file with 
+            embedded assets (default: True).
+        plugins (list[Plugin]): List of optional plugins to include (default: []).
+        slide_defaults (SlideDefaults): Global defaults for slides (default: SlideDefaults()).
+        cell_defaults (CellDefaults): Global defaults for cells (default: CellDefaults()).
+        autosave (str | None): Optional filename to autosave after each change.
+            Use it when iteratively building a presentation to live-preview in
+            a browser. If building a large presentation, consider not using 
+            autosave to avoid excessive writes.
+        autosave_level (Literal['slide', 'cell']): Whether to autosave after each 
+            slide change or cell change (default: 'slide').
+            Use 'slide' on presentations with many cells to avoid excessive writes.
+            Only relevant if autosave is set to a filename.
+
     Example::
 
         slides = HTMLSlides(
@@ -80,15 +101,17 @@ class HTMLSlides:
     def __init__(
         self,
         title:          str,
-        author:         str                   = "",
-        date:           str                   = "",
-        version:        str                   = "",
-        theme:          str                   = "default",
-        custom_css:     str | Path | None     = None,
-        self_contained: bool                  = True,
-        plugins:        list[Plugin]          = [],
-        slide_defaults: SlideDefaults         = SlideDefaults(),   # noqa: B006
-        cell_defaults:  CellDefaults          = CellDefaults(),    # noqa: B006
+        author:         str                      = "",
+        date:           str                      = "",
+        version:        str                      = "",
+        theme:          str                      = "default",
+        custom_css:     str | Path | None        = None,
+        self_contained: bool                     = True,
+        plugins:        list[Plugin]             = [],
+        slide_defaults: SlideDefaults            = SlideDefaults(),   # noqa: B006
+        cell_defaults:  CellDefaults             = CellDefaults(),    # noqa: B006
+        autosave:       str | None               = None,
+        autosave_level: Literal['slide', 'cell'] = 'slide',
     ) -> None:
         self.title          = title
         self.author         = author
@@ -100,8 +123,11 @@ class HTMLSlides:
         self.plugins        = list(plugins)
         self.slide_defaults = slide_defaults
         self.cell_defaults  = cell_defaults
+        self.autosave       = autosave
+        self.autosave_level = autosave_level
 
         self._slides:   list[Slide] = []
+        self._slide_map: dict[Hashable, Slide] = {}
         self._sections: list[dict[str, Any]] = []   # for the automatic TOC
         self._slide_counter = 0
 
@@ -189,8 +215,9 @@ class HTMLSlides:
         row_heights: list[int | str] | None   = _UNSET,   # type: ignore[assignment]
         col_widths:  list[int | str] | None   = _UNSET,   # type: ignore[assignment]
         notes:       str                      = "",
+        slide_id:    Hashable | None          = None,
     ) -> Slide:
-        """Add a standard slide with an ``nrows × ncols`` canvas."""
+        """Add a standard slide with an ``nrows x ncols`` canvas."""
         sd = self.slide_defaults
         return self._make_slide(
             title=title,
@@ -201,6 +228,7 @@ class HTMLSlides:
             row_heights=sd.row_heights if row_heights is _UNSET else row_heights,
             col_widths=sd.col_widths   if col_widths  is _UNSET else col_widths,
             notes=notes,
+            slide_id=slide_id,
         )
 
     def write(
@@ -221,6 +249,16 @@ class HTMLSlides:
 
         return path
 
+    def remove_slide(
+            self,
+            slide_id:Hashable
+        ) -> None:
+        """Remove a slide by its ID."""
+        if slide_id not in self._slide_map:
+            raise KeyError(f"No slide found with ID: {slide_id}")
+        slide = self._slide_map.pop(slide_id)
+        self._slides.remove(slide)
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
@@ -235,10 +273,20 @@ class HTMLSlides:
         row_heights: list[int | str] | None,
         col_widths:  list[int | str] | None,
         notes:       str,
+        slide_id:    Hashable | None = None,
     ) -> Slide:
         self._slide_counter += 1
+        
+        if slide_id is None:
+            slide_id = f"_slide-{self._slide_counter}"
+        else:
+            slide_id = slide_id
+        
+        if slide_id in self._slide_map:
+            self.remove_slide(slide_id)
+        
         slide = Slide(
-            slide_id      = f"slide-{self._slide_counter}",
+            slide_id      = slide_id,
             title         = title,
             subtitle      = subtitle,
             slide_type    = slide_type,  # type: ignore[arg-type]
@@ -249,8 +297,14 @@ class HTMLSlides:
             notes         = notes,
             cell_defaults = self.cell_defaults,
             plugin_names  = self._plugin_names,
+            parent        = self,
         )
         self._slides.append(slide)
+        self._slide_map[slide_id] = slide
+
+        if self.autosave:
+            self.write(self.autosave)
+
         return slide
 
     # ------------------------------------------------------------------
@@ -260,6 +314,10 @@ class HTMLSlides:
     @property
     def slides(self) -> list[Slide]:
         return list(self._slides)
+
+    @property
+    def slide_map(self) -> dict[Hashable, Slide]:
+        return dict(self._slide_map)
 
     def __repr__(self) -> str:
         return (

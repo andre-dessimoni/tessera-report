@@ -6,12 +6,13 @@ Defines the ``Slide`` class and slide types (SlideType).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Hashable
 
 if TYPE_CHECKING:
     import matplotlib.figure
     import pandas as pd
     import plotly.graph_objects as go
+    from tessera import HTMLSlides
 
 from tessera.cells import (
     _UNSET,
@@ -45,7 +46,7 @@ class Slide:
     def __init__(
         self,
         *,
-        slide_id: str,
+        slide_id: Hashable,
         title: str,
         subtitle: str,
         slide_type: SlideType,
@@ -56,6 +57,7 @@ class Slide:
         notes: str,
         cell_defaults: Any,          # CellDefaults — lazy import to avoid circular deps
         plugin_names: frozenset[str],
+        parent: HTMLSlides
     ) -> None:
         self.slide_id     = slide_id
         self.title        = title
@@ -66,6 +68,7 @@ class Slide:
         self.notes        = notes
         self._cell_defaults = cell_defaults
         self._plugin_names  = plugin_names
+        self.parent       = parent
 
         # Size grid
         self.row_heights = _normalize_sizes(row_heights, nrows)
@@ -77,11 +80,9 @@ class Slide:
         ]
 
         # Cells registered in insertion order
-        self.cells: list[Cell] = []
-
-        # Auto-fill cursor
-        self._cursor_row = 1
-        self._cursor_col = 1
+        self._cells: list[Cell] = []
+        self._cell_map: dict[Hashable, Cell] = {}
+        self._next_cell_id = 1 
 
     # ------------------------------------------------------------------
     # Internals — used by @cell_method
@@ -103,7 +104,7 @@ class Slide:
             return col, row
 
         # Advance cursor until a free position with enough space is found
-        r, c = self._cursor_row, self._cursor_col
+        r, c = 1, 1
         while r <= self.nrows:
             while c <= self.ncols:
                 if not self._occupied[r - 1][c - 1]:
@@ -120,26 +121,43 @@ class Slide:
         from tessera.exceptions import CellPlacementError
         raise CellPlacementError(
             "No available position on the canvas to insert the cell. "
-            f"Canvas {self.nrows}×{self.ncols} is already full."
+            f"Canvas {self.nrows}x{self.ncols} is already full."
         )
 
-    def _register_cell(self, cell: Cell) -> None:
+    def _register_cell(self, cell: Cell, cell_id: Hashable) -> None:
         """Mark the positions occupied by the cell on the internal map."""
         p = cell.params
         for r in range(p.row, p.row + p.rowspan):
             for c in range(p.col, p.col + p.colspan):
                 self._occupied[r - 1][c - 1] = True
-        self.cells.append(cell)
+        
+        self._cells.append(cell)
+        self._cell_map[cell_id] = cell
 
-        # Advance cursor past the inserted cell (next column)
-        next_col = p.col + p.colspan
-        if next_col > self.ncols:
-            self._cursor_row = p.row + 1
-            self._cursor_col = 1
-        else:
-            self._cursor_row = p.row
-            self._cursor_col = next_col
+    def remove_cell(
+            self,
+            cell_id:Hashable,
+            _caller_is_cell_method: bool = False
+        ) -> None:
+        if cell_id not in self._cell_map:
+            raise KeyError(f"No slide found with ID: {cell_id}")
+        
+        cell = self._cell_map.pop(cell_id)
+        self._cells.remove(cell)
 
+        p = cell.params
+        for r in range(p.row, p.row + p.rowspan):
+            for c in range(p.col, p.col + p.colspan):
+                self._occupied[r - 1][c - 1] = False
+
+        # Autosave only if not called from within a cell method, to avoid 
+        # multiple saves during the same operation
+        if (
+            (not _caller_is_cell_method) 
+            and (self.parent.autosave 
+                 and self.parent.autosave_level == 'cell')
+        ):
+            self.parent.write(self.parent.autosave)
     # ------------------------------------------------------------------
     # add_* methods — decorated with @cell_method
     # ------------------------------------------------------------------
@@ -428,9 +446,20 @@ class Slide:
     def __repr__(self) -> str:
         return (
             f"Slide(id={self.slide_id!r}, type={self.slide_type!r}, "
-            f"title={self.title!r}, grid={self.nrows}×{self.ncols})"
+            f"title={self.title!r}, grid={self.nrows}x{self.ncols})"
         )
+    
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
 
+    @property
+    def cells(self):
+        return list(self._cells)
+    
+    @property 
+    def cell_map(self):
+        return dict(self._cell_map)
 
 # ---------------------------------------------------------------------------
 # Helpers
