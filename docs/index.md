@@ -17,7 +17,7 @@ pip install "tessera-slides[full]"
 
 The presentaion below is an example of the capabilities of téssera.
 
-For better visualization click on the **Full screen** button on the bottom toolbar
+For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom toolbar.
 
 ```{raw} html
 <div style="
@@ -69,6 +69,7 @@ slides.write("report", open_browser=True)
 :caption: Guides
 
 sections/quickstart
+sections/structure
 sections/cell-types
 sections/slide-ids
 sections/live-editing

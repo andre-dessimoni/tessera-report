@@ -2,7 +2,7 @@
 
 The presentaion below is an example of the capabilities of téssera.
 
-For better visualization click on the **Full screen** button on the bottom toolbar
+For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom toolbar.
 
 Use the arrow keys or click the side arrows to navigate between slides.
 

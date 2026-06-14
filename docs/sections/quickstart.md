@@ -71,7 +71,8 @@ slides.write("report", open_browser=True)
 ```
 
 This generates `report.html` — a single file with no external dependencies.
-Click on the `Fullscreen (F)` buttom on the bottom toolbar for better visualization.
+
+For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom toolbar.
 
 ```{raw} html
 <div style="
