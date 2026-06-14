@@ -68,15 +68,18 @@ slides.write("report", open_browser=True)
 :maxdepth: 2
 :caption: Guides
 
-quickstart
-cell-types
-demo
+sections/quickstart
+sections/layout-templates
+sections/slide-ids
+sections/live-editing
+sections/cell-types
+sections/demo
 ```
 
 ```{toctree}
 :maxdepth: 1
 :caption: Reference
 
-api
+sections/api
 changelog
 ```
