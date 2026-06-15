@@ -11,7 +11,16 @@
 {{ css }}
   </style>
 </head>
-<body>
+<body
+  {% if deck.size %}
+  class="fixed-size"
+  data-width="{{ deck.size[0] }}"
+  data-height="{{ deck.size[1] }}"
+  data-scale-up="{{ 'true' if deck.scale_up else 'false' }}"
+  data-keep-aspect="{{ 'true' if deck.keep_aspect_ratio else 'false' }}"
+  style="--stage-w: {{ deck.size[0] }}px; --stage-h: {{ deck.size[1] }}px;"
+  {% endif %}
+>
 
 <!-- ===================== SIDEBAR ===================== -->
 <nav id="sidebar">

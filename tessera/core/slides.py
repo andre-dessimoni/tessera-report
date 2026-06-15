@@ -105,12 +105,28 @@ class HTMLSlides:
         cell_defaults (CellDefaults): Global defaults for cells (default: CellDefaults()).
         autosave (str | None): Optional filename to autosave after each change.
             Use it when iteratively building a presentation to live-preview in
-            a browser. If building a large presentation, consider not using 
+            a browser. If building a large presentation, consider not using
             autosave to avoid excessive writes.
-        autosave_level (Literal['slide', 'cell']): Whether to autosave after each 
+        autosave_level (Literal['slide', 'cell']): Whether to autosave after each
             slide change or cell change (default: 'slide').
             Use 'slide' on presentations with many cells to avoid excessive writes.
             Only relevant if autosave is set to a filename.
+        size (tuple[int, int] | None): Fixed slide dimensions in pixels, e.g.
+            ``(1366, 768)``. When set, slides become a fixed-size "stage" that is
+            scaled with a CSS transform to fit the available area — every element
+            (fonts, images, layout) scales together, just like a static PDF.
+            When ``None`` (default) the layout is fluid and fills the window
+            (current behaviour).
+        scale_up (bool): When ``size`` is set, allow scaling beyond the native
+            dimensions to fill larger screens. When ``False`` (default) the stage
+            never grows past 1:1 — it only shrinks on smaller windows.
+        keep_aspect_ratio (bool): When ``size`` is set and ``True`` (default), the
+            stage scales uniformly and is letterboxed. When ``False`` the stage
+            stretches to fill both dimensions independently (distorts content).
+        show_sidebar (bool): Render the slide-navigation sidebar (default
+            ``True``). Set to ``False`` for clean single-slide / embeddable files.
+        show_toolbar (bool): Render the bottom navigation toolbar (default
+            ``True``). Set to ``False`` for clean single-slide / embeddable files.
 
     Example::
 
@@ -142,6 +158,9 @@ class HTMLSlides:
         cell_defaults:  CellDefaults             = CellDefaults(),    # noqa: B006
         autosave:       str | None               = None,
         autosave_level: Literal['slide', 'cell'] = 'slide',
+        size:              tuple[int, int] | None = None,
+        scale_up:          bool                   = False,
+        keep_aspect_ratio: bool                   = True,
     ) -> None:
         self.title          = title
         self.author         = author
@@ -155,6 +174,9 @@ class HTMLSlides:
         self.cell_defaults  = cell_defaults
         self.autosave       = autosave
         self.autosave_level = autosave_level
+        self.size              = size
+        self.scale_up          = scale_up
+        self.keep_aspect_ratio = keep_aspect_ratio
 
         self._slides:   list[Slide] = []
         self._slide_map: dict[Hashable, Slide] = {}

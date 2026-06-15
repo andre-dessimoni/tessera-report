@@ -40,6 +40,8 @@ html, body {
   height: calc(100% - var(--toolbar-height));
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   z-index: 100;
   transition: width 0.2s ease;
@@ -74,6 +76,7 @@ body.sb-no-transition #sidebar-resize-handle {
 }
 
 #sidebar-header {
+  flex-shrink: 0;
   padding: 16px 12px 12px;
   font-weight: 700;
   font-size: 0.85rem;
@@ -86,6 +89,24 @@ body.sb-no-transition #sidebar-resize-handle {
 #slide-list {
   list-style: none;
   padding: 8px 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+#slide-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#slide-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+#slide-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .sidebar-item {
@@ -162,6 +183,25 @@ body.sb-no-transition #sidebar-resize-handle {
 
 .slide.active {
   display: flex;
+}
+
+/* ---- Fixed-size (scaled stage) mode ---- */
+/* The active slide becomes a fixed-dimension canvas scaled with a CSS
+   transform to fit #main. Everything inside scales together, like a PDF.
+   Modal & lightbox live outside #main, so they stay unscaled. */
+.fixed-size #main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.fixed-size .slide {
+  width: var(--stage-w);
+  height: var(--stage-h);
+  flex: none;
+  transform: scale(var(--stage-sx, 1), var(--stage-sy, 1));
+  transform-origin: center center;
 }
 
 /* ---- Toolbar ---- */
