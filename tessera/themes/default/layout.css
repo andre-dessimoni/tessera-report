@@ -88,13 +88,18 @@ body.sb-no-transition #sidebar-resize-handle {
 
 /* ---- Sidebar search box ---- */
 #sidebar-search-wrap {
+  position: relative;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--color-border);
 }
 
 #sidebar-search {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   background: var(--color-surface2);
   border: 1px solid var(--color-border);
   color: var(--color-text);
@@ -110,6 +115,86 @@ body.sb-no-transition #sidebar-resize-handle {
 #sidebar-search.sidebar-search-error {
   border-color: var(--color-accent);
   background: rgba(233, 69, 96, 0.12);
+}
+
+/* Regex-mode toggle */
+#sidebar-regex-toggle {
+  flex-shrink: 0;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius);
+  padding: 4px 7px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+#sidebar-regex-toggle:hover { color: var(--color-text); }
+#sidebar-regex-toggle.active {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* Common-patterns tooltip — shown only in regex mode on hover/focus */
+#sidebar-regex-tip {
+  display: none;
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 10px;
+  right: 10px;
+  z-index: 120;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 7px 9px;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+#sidebar-regex-tip code {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  background: var(--color-surface);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+#sidebar-search-wrap.regex-on:hover #sidebar-regex-tip,
+#sidebar-search-wrap.regex-on:focus-within #sidebar-regex-tip {
+  display: block;
+}
+
+/* ---- Fold toolbar (collapse/expand all / by level) ---- */
+#sidebar-fold-bar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+#sidebar-fold-bar button {
+  flex: 1;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius);
+  padding: 3px 0;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+#sidebar-fold-bar button:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 #slide-list {
@@ -153,12 +238,12 @@ body.sb-no-transition #sidebar-resize-handle {
 .sidebar-caret,
 .sidebar-caret-spacer {
   flex-shrink: 0;
-  width: 12px;
+  width: 14px;
 }
 
 .sidebar-caret {
   text-align: center;
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   line-height: 1;
   color: var(--color-text-muted);
   cursor: pointer;

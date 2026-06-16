@@ -94,8 +94,18 @@
     revealActiveSidebarItem();
   }
 
+  // Step to the nearest *visible* sidebar item in the direction of delta,
+  // so arrow keys / prev-next skip search-filtered and collapsed-away slides.
   function navigate(delta) {
-    goTo(current + delta);
+    var items = document.querySelectorAll(".sidebar-item");
+    var step = delta < 0 ? -1 : 1;
+    var i = current + step;
+    while (i >= 0 && i < slides.length) {
+      var it = items[i];
+      if (!it || !it.classList.contains("sidebar-hidden")) { goTo(i); return; }
+      i += step;
+    }
+    // no visible slide in that direction -> stay put
   }
 
   function goToSlide(slideId) {
@@ -453,17 +463,83 @@
   var _collapsedSections = new Set();
   var _searchActive = false;
   var _searchRe = null;
+  var _regexMode = false;          // literal by default; remembered across reloads
   var _ancestors = new Map();      // item el -> [ancestor section id, ...] (outermost first)
   var _sectionGroups = new Map();  // section id -> [descendant item els]
   var _searchTimer = null;
   var SB_COLLAPSED_KEY = "tessera-sb-collapsed-sections";
+  var SB_REGEX_KEY = "tessera-sb-regex";
 
   function initSidebarSections() {
     if (!document.getElementById("slide-list")) return;   // chromeless / no sidebar
     buildSectionTree();
     hideEmptyCarets();
     restoreCollapsed();
+    restoreRegexMode();
     applySidebarVisibility();
+    // Hide the fold toolbar when the deck has no foldable sections.
+    var foldBar = document.getElementById("sidebar-fold-bar");
+    if (foldBar && _sectionEls().length === 0) foldBar.style.display = "none";
+  }
+
+  // Foldable sections (those with a non-empty descendant group), with level.
+  function _sectionEls() {
+    var out = [];
+    document.querySelectorAll('.sidebar-item[data-type="section"]').forEach(function (el) {
+      var group = _sectionGroups.get(el.dataset.target);
+      if (group && group.length) {
+        out.push({ el: el, id: el.dataset.target, level: parseInt(el.dataset.level, 10) || 0 });
+      }
+    });
+    return out;
+  }
+
+  function _applyFold(touched) {
+    touched.forEach(syncCaret);
+    persistCollapsed();
+    applySidebarVisibility();
+  }
+
+  function collapseAllSections() {
+    var touched = [];
+    _sectionEls().forEach(function (s) {
+      if (!_collapsedSections.has(s.id)) { _collapsedSections.add(s.id); touched.push(s.id); }
+    });
+    _applyFold(touched);
+  }
+
+  function expandAllSections() {
+    var touched = Array.from(_collapsedSections);
+    _collapsedSections.clear();
+    _applyFold(touched);
+  }
+
+  // Progressive: fold the deepest currently-open layer of sections.
+  function collapseLevel() {
+    var open = _sectionEls().filter(function (s) {
+      return !_collapsedSections.has(s.id) && !hasCollapsedAncestor(s.el);
+    });
+    if (!open.length) return;
+    var maxLevel = open.reduce(function (m, s) { return Math.max(m, s.level); }, 0);
+    var touched = [];
+    open.forEach(function (s) {
+      if (s.level === maxLevel) { _collapsedSections.add(s.id); touched.push(s.id); }
+    });
+    _applyFold(touched);
+  }
+
+  // Progressive: reveal the outermost currently-folded layer of sections.
+  function expandLevel() {
+    var folded = _sectionEls().filter(function (s) {
+      return _collapsedSections.has(s.id) && !hasCollapsedAncestor(s.el);
+    });
+    if (!folded.length) return;
+    var minLevel = folded.reduce(function (m, s) { return Math.min(m, s.level); }, Infinity);
+    var touched = [];
+    folded.forEach(function (s) {
+      if (s.level === minLevel) { _collapsedSections.delete(s.id); touched.push(s.id); }
+    });
+    _applyFold(touched);
   }
 
   // Walk the flat item list with a level stack to derive each item's ancestor
@@ -504,13 +580,17 @@
     _searchTimer = setTimeout(function () { _applyFilter(value); }, 120);
   }
 
+  function escapeRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   function _applyFilter(value) {
     var input = document.getElementById("sidebar-search");
     value = (value || "").trim();
     if (value === "") {
       _searchActive = false; _searchRe = null;
       if (input) input.classList.remove("sidebar-search-error");
-    } else {
+    } else if (_regexMode) {
       try {
         _searchRe = new RegExp(value, "i");
         _searchActive = true;
@@ -519,8 +599,37 @@
         _searchRe = null; _searchActive = false;   // invalid regex -> no filter
         if (input) input.classList.add("sidebar-search-error");
       }
+    } else {
+      // Literal mode: escape the query so specials match verbatim (always valid).
+      _searchRe = new RegExp(escapeRegex(value), "i");
+      _searchActive = true;
+      if (input) input.classList.remove("sidebar-search-error");
     }
     applySidebarVisibility();
+  }
+
+  function _syncRegexUI() {
+    var btn = document.getElementById("sidebar-regex-toggle");
+    var wrap = document.getElementById("sidebar-search-wrap");
+    var input = document.getElementById("sidebar-search");
+    if (btn) btn.classList.toggle("active", _regexMode);
+    if (wrap) wrap.classList.toggle("regex-on", _regexMode);
+    if (input) input.placeholder = _regexMode ? "Filter slides… (regex)" : "Filter slides…";
+  }
+
+  function toggleRegexMode() {
+    _regexMode = !_regexMode;
+    try { localStorage.setItem(SB_REGEX_KEY, _regexMode ? "1" : "0"); } catch (e) {}
+    _syncRegexUI();
+    var input = document.getElementById("sidebar-search");
+    if (input) _applyFilter(input.value);   // re-run with the new interpretation
+  }
+
+  function restoreRegexMode() {
+    _regexMode = localStorage.getItem(SB_REGEX_KEY) === "1";
+    _syncRegexUI();
+    var input = document.getElementById("sidebar-search");
+    if (input && input.value) _applyFilter(input.value);   // honor a restored value
   }
 
   function getSearchHaystack(el) {
@@ -596,6 +705,7 @@
   // Auto-expand collapsed ancestors of the active item so keyboard/arrow nav
   // into a folded section reveals it. Called at the end of goTo().
   function revealActiveSidebarItem() {
+    if (_searchActive) return;   // search shows matches regardless of collapse
     var items = document.querySelectorAll(".sidebar-item");
     var el = items[current];
     if (!el) return;
@@ -687,6 +797,11 @@
   window.sliderNav             = sliderNav;
   window.filterSidebar         = filterSidebar;
   window.toggleSection         = toggleSection;
+  window.toggleRegexMode       = toggleRegexMode;
+  window.collapseAllSections   = collapseAllSections;
+  window.expandAllSections     = expandAllSections;
+  window.collapseLevel         = collapseLevel;
+  window.expandLevel           = expandLevel;
 
   // -- Boot -----------------------------------------------
   if (document.readyState === "loading") {

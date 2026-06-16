@@ -29,10 +29,25 @@
   <div id="sidebar-header">{{ deck.title }}</div>
   {% if deck.sidebar_search %}
   <div id="sidebar-search-wrap">
-    <input id="sidebar-search" type="text" placeholder="Filter slides… (regex)"
+    <input id="sidebar-search" type="text" placeholder="Filter slides…"
            autocomplete="off" spellcheck="false"
            oninput="filterSidebar(this.value)"
            onkeydown="if(event.key==='Escape'){this.value='';filterSidebar('');this.blur();}" />
+    <button id="sidebar-regex-toggle" type="button" title="Toggle regex mode"
+            onclick="toggleRegexMode()">.*</button>
+    <div id="sidebar-regex-tip" role="tooltip">
+      <b>Regex</b> &middot; <code>^start</code> &middot; <code>end$</code> &middot;
+      <code>a|b</code> &middot; <code>.</code> any &middot; <code>.*</code> seq &middot;
+      <code>\d</code> digit &middot; <code>[abc]</code> set
+    </div>
+  </div>
+  {% endif %}
+  {% if deck.sidebar_collapsible_sections %}
+  <div id="sidebar-fold-bar">
+    <button type="button" title="Collapse all"       onclick="collapseAllSections()">&#8862;</button>
+    <button type="button" title="Expand all"         onclick="expandAllSections()">&#8863;</button>
+    <button type="button" title="Collapse one level" onclick="collapseLevel()">&#8743;</button>
+    <button type="button" title="Expand one level"   onclick="expandLevel()">&#8744;</button>
   </div>
   {% endif %}
   <ul id="slide-list">

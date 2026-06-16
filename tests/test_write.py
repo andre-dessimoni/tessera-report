@@ -258,3 +258,38 @@ def test_sidebar_search_absent_when_no_sidebar(tmp_path):
     html = deck.write(tmp_path / "out", open_browser=False).read_text(encoding="utf-8")
     assert 'id="sidebar-search"' not in html
     assert '<nav id="sidebar">' not in html
+
+
+def test_sidebar_regex_toggle_and_tooltip(tmp_path):
+    deck = minimal_deck()
+    deck.add_slide("Data", nrows=1, ncols=1).add_text("x")
+    html = deck.write(tmp_path / "out", open_browser=False).read_text(encoding="utf-8")
+    assert 'id="sidebar-regex-toggle"' in html
+    assert "toggleRegexMode(" in html
+    assert 'id="sidebar-regex-tip"' in html
+
+
+def test_sidebar_regex_toggle_absent_when_search_off(tmp_path):
+    deck = minimal_deck(sidebar_search=False)
+    deck.add_slide("Data", nrows=1, ncols=1).add_text("x")
+    html = deck.write(tmp_path / "out", open_browser=False).read_text(encoding="utf-8")
+    assert 'id="sidebar-regex-toggle"' not in html
+
+
+def test_sidebar_fold_bar_present(tmp_path):
+    deck = minimal_deck()
+    deck.add_section("Intro")
+    deck.add_slide("Data", nrows=1, ncols=1).add_text("x")
+    html = deck.write(tmp_path / "out", open_browser=False).read_text(encoding="utf-8")
+    assert 'id="sidebar-fold-bar"' in html
+    assert "collapseAllSections(" in html
+    assert "expandAllSections(" in html
+    assert "collapseLevel(" in html
+    assert "expandLevel(" in html
+
+
+def test_sidebar_fold_bar_absent_when_collapsible_off(tmp_path):
+    deck = minimal_deck(sidebar_collapsible_sections=False)
+    deck.add_section("Intro")
+    html = deck.write(tmp_path / "out", open_browser=False).read_text(encoding="utf-8")
+    assert 'id="sidebar-fold-bar"' not in html
