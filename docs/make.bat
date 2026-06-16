@@ -10,16 +10,25 @@ IF "%1"=="help"  GOTO help
 IF "%1"=="html"  GOTO html
 IF "%1"=="clean" GOTO clean
 IF "%1"=="live"  GOTO live
+IF "%1"=="slides" GOTO slides
 IF "%1"=="install" GOTO install
 GOTO help
 
 :help
-ECHO Usage: make.bat [html^|clean^|live^|install]
+ECHO Usage: make.bat [html^|clean^|live^|slides^|install]
 ECHO.
 ECHO   html     Build HTML documentation in _build/html
 ECHO   clean    Remove the _build directory
 ECHO   live     Local server with auto-rebuild (requires sphinx-autobuild)
+ECHO   slides   Regenerate the embedded _static/*.html slide previews
 ECHO   install  Install documentation dependencies
+GOTO end
+
+:slides
+python conf.py
+IF ERRORLEVEL 1 EXIT /B 1
+ECHO.
+ECHO Slide previews regenerated in _static\
 GOTO end
 
 :html

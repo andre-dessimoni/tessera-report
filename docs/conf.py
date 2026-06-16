@@ -1,6 +1,6 @@
 """Sphinx configuration for tessera documentation."""
 
-import shutil
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,33 +13,56 @@ _STATIC_DIR = _HERE / "_static"
 sys.path.insert(0, str(_ROOT))
 
 # ---------------------------------------------------------------------------
-# Demo build hook — generate the _static/example1.html slide
+# Slide generation hook — build the embedded _static/*.html previews
+#
+# These run LOCALLY on every `make.bat html` / `make.bat live` build and the
+# resulting .html files are committed to the repo. On Read the Docs we skip
+# generation entirely and serve the committed files, so RTD doesn't need the
+# heavy plotting/data dependencies (plotly, pandas, matplotlib) or local assets.
 # ---------------------------------------------------------------------------
 
-_EXAMPLE_DIR    = _HERE / "examples" / "example1"
-_EXAMPLE_SCRIPT = _EXAMPLE_DIR / "example1.py"
+# Each entry is a standalone script that writes one or more files into _static/.
+_SLIDE_GENERATORS = [
+    _HERE / "examples" / "example1"   / "example1.py",
+    _HERE / "examples" / "quickstart" / "quickstart.py",
+    _HERE / "examples" / "layout"     / "layout.py",
+    _HERE / "examples" / "cell_types" / "cell_types.py",
+]
 
-def _generate_demo(app):
-    import os
+
+def _generate_slides(app=None):
+    if os.environ.get("READTHEDOCS"):
+        print("tessera: skipping slide generation on Read the Docs "
+              "(serving committed _static/*.html)")
+        return
+
     _STATIC_DIR.mkdir(exist_ok=True)
     env = {**os.environ, "PYTHONPATH": str(_ROOT)}
-    try:
-        subprocess.run(
-            [sys.executable, str(_EXAMPLE_SCRIPT)],
-            cwd=str(_EXAMPLE_DIR),
-            check=True,
-            timeout=90,
-            env=env,
-        )
-        print("tessera demo: example1.html written to docs/_static/")
-    except subprocess.CalledProcessError as exc:
-        print(f"tessera demo: warning — could not generate demo: {exc}")
-    except Exception as exc:
-        print(f"tessera demo: warning — could not generate demo: {exc}")
+    for script in _SLIDE_GENERATORS:
+        if not script.exists():
+            print(f"tessera: skip — generator not found: {script.name}")
+            continue
+        try:
+            subprocess.run(
+                [sys.executable, str(script)],
+                cwd=str(script.parent),
+                check=True,
+                timeout=120,
+                env=env,
+            )
+            print(f"tessera: generated slides from {script.name}")
+        except Exception as exc:
+            print(f"tessera: warning — {script.name} failed: {exc}")
 
 
 def setup(app):
-    app.connect("builder-inited", _generate_demo)
+    app.connect("builder-inited", _generate_slides)
+
+
+# Allow running this module directly to (re)generate the slides without a build:
+#   python docs/conf.py        (used by `make.bat slides`)
+if __name__ == "__main__":
+    _generate_slides()
 
 # ---------------------------------------------------------------------------
 # Project
@@ -101,7 +124,8 @@ html_theme_options = {
     "source_directory":     "docs/",
 }
 
-html_js_files = ["github-edit-icon.js"]
+html_js_files  = ["github-edit-icon.js"]
+html_css_files = ["embed.css"]
 
 # ---------------------------------------------------------------------------
 # Source

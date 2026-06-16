@@ -19,17 +19,9 @@ slide.add_text("E")   # row 2, col 2
 slide.add_text("F", row=2, col=3)   # row 2, col 3
 ```
 
-<!-- SCREENSHOT ─ grid-basic.png
-Run the code above and capture the resulting slide in a browser.
-Six text cells labelled A–F filling a 2×3 grid in reading order.
-Save as: docs/_static/img/layout-templates/grid-basic.png
--->
-
-```{figure} ../_static/img/layout-templates/grid-basic.png
-:alt: A 2×3 grid with six text cells placed in reading order
-:width: 90%
-
-Six cells auto-placed in a 2×3 grid.
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/layout.html#grid-basic"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 ---
@@ -52,18 +44,9 @@ slide = slides.add_slide(
 Mixed units work — `fr` values fill the remaining space after fixed sizes are
 applied, the same way they do in native CSS Grid.
 
-<!-- SCREENSHOT ─ grid-sizing.png
-Run the code above (add a few text cells for visibility) and capture the slide.
-The left column should be noticeably wider than the right one, and the first row
-shorter/taller than the second depending on the content.
-Save as: docs/_static/img/layout-templates/grid-sizing.png
--->
-
-```{figure} ../_static/img/layout-templates/grid-sizing.png
-:alt: A 2×2 grid with unequal column widths and row heights
-:width: 90%
-
-A 2×2 grid with `col_widths=["2fr", "1fr"]` and `row_heights=["120px", "1fr"]`.
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/layout.html#grid-sizing"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 ---
@@ -92,18 +75,9 @@ slide.add_image("photo.png", col=2, row=1, rowspan=2)
 
 ```
 
-<!-- SCREENSHOT ─ grid-spanning.png
-Build a slide with a clear colspan/rowspan example — e.g. a wide header cell on
-top spanning 2 columns, a metric on the right, and a table spanning the full
-bottom row. Capture the slide in a browser so the cell boundaries are visible.
-Save as: docs/_static/img/layout-templates/grid-spanning.png
--->
-
-```{figure} ../_static/img/layout-templates/grid-spanning.png
-:alt: A 2×3 grid with cells spanning multiple columns and rows
-:width: 90%
-
-A 2×3 slide with `colspan` and `rowspan` in use.
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/layout.html#grid-spanning"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 ---
@@ -144,20 +118,10 @@ The priority order for each parameter is:
 2. **Per-call default** — `slide_defaults` / `cell_defaults` argument on `add_slide()`.
 3. **Global default** — `slide_defaults` / `cell_defaults` set on `HTMLSlides`.
 
-<!-- SCREENSHOT ─ layout-templates.png
-Show the tessera presentation in a browser (two slides visible via the slide
-navigator):
-  • Slide 1 "Results": 2×2 grid, four text cells with "Cell 0" … "Cell 3",
-    text centred both horizontally and vertically in each card.
-  • Slide 2 "Summary": 2×1 grid, two text cells "Cell 0" and "Cell 1",
-    left-aligned (global default).
-Save as: docs/_static/img/layout-templates/layout-templates.png
--->
-
-```{figure} ../_static/img/layout-templates/layout-templates.png
-:alt: Two slides using different layout templates
-:width: 90%
-
-Two slides built from different `SlideDefaults` templates. Slide 1 uses a 2×1 
-grid with the global cell defaults; Slide 2 uses a 2×2 grid with centred content
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/layout.html#templates-results"
+        loading="lazy" allowfullscreen></iframe>
 ```
+
+Use the slide navigator (toggle the sidebar with the &#9776; button or `B`) to
+compare the centred *Results* slide with the left-aligned *Summary* slide.

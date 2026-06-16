@@ -159,7 +159,6 @@ For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom tool
 
 ```{raw} html
 <div style="
-  width: 65vw;
   position: relative;
   padding: 0 1rem;
   box-sizing: border-box;

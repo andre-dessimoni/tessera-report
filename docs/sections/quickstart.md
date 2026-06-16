@@ -75,25 +75,8 @@ This generates `report.html` — a single file with no external dependencies.
 For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom toolbar.
 
 ```{raw} html
-<div style="
-  width: 65vw;
-  position: relative;
-  padding: 0 1rem;
-  box-sizing: border-box;
-">
-  <iframe
-    src="../_static/quick-start-report.html"
-    style="
-      display: block;
-      width: 100%;
-      height: 600px;
-      border: 1px solid var(--color-background-border, #ccc);
-      border-radius: 8px;
-    "
-    loading="lazy"
-    allowfullscreen
-  ></iframe>
-</div>
+<iframe class="tessera-embed" src="../_static/quick-start-report.html"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 
@@ -161,4 +144,54 @@ slides = HTMLSlides(
         transparent=False,
     ),
 )
+```
+
+## Fixed-size slides
+
+By default the layout is fluid and fills the browser window. Pass `size` to
+pin slides to fixed pixel dimensions instead. The slide becomes a *stage* that
+is scaled with a CSS transform to fit the available space — fonts, images, and
+layout all scale together, so the result behaves like a static PDF page.
+
+```python
+slides = HTMLSlides(
+    title="Report",
+    size=(1366, 768),          # 16:9 stage in pixels
+    scale_up=False,            # don't grow past 1:1 on large screens (default)
+    keep_aspect_ratio=True,    # uniform scale + letterbox (default)
+)
+```
+
+| Option | Effect |
+|---|---|
+| `size=(w, h)` | Enables fixed-size mode. `None` (default) keeps the fluid layout |
+| `scale_up=True` | Allow the stage to grow beyond its native size to fill larger windows |
+| `keep_aspect_ratio=False` | Stretch to fill both dimensions independently (distorts content) |
+
+This is also the recommended mode for embedding a deck in an `<iframe>`, since
+the slide keeps a predictable aspect ratio regardless of the frame size.
+
+## Single-slide / embeddable files
+
+For a clean, minimal file — such as the slides embedded throughout this
+documentation — hide the navigation sidebar and/or the bottom toolbar:
+
+```python
+slides = HTMLSlides(
+    title="Demo",
+    size=(960, 540),
+    show_sidebar=False,
+    show_toolbar=False,
+)
+slides.add_slide("Just this slide").add_text("No chrome around me.")
+```
+
+With both hidden the slide fills the whole frame. Combine with `size` for a
+fixed aspect ratio that embeds cleanly in an `<iframe>`.
+
+To keep the sidebar available but out of the way, start it collapsed instead of
+hiding it — it can still be toggled open with the toolbar button or the `B` key:
+
+```python
+slides = HTMLSlides(title="Report", sidebar_collapsed=True)
 ```

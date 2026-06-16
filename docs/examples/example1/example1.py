@@ -10,11 +10,14 @@ slides = HTMLSlides(
     title="My Report",
     author="André Dessimoni",
     plugins=[
-        Plugin('mathjax', 'cdn'), 
+        Plugin('mathjax', 'cdn'),
         Plugin('highlight'),
         Plugin('plotly', 'cdn')
     ],
-    theme='dark'
+    theme='dark',
+    size=(1280, 720),
+    scale_up=True,
+    sidebar_collapsed=True,
 )
 
 # -----------------------------------------------------------------------------
@@ -28,9 +31,9 @@ slide = slides.add_slide(
     col_widths=['20%', '20%', '20%', '40%']
 )
 
-slide.add_image('figs/c08c-isoq10-iso.png', row=1, col=1, caption='Original Cylinder without strakes')
-slide.add_image('figs/s05c-isoq10-iso.png', row=1, col=2, caption='Cylinder with strake a')
-slide.add_image('figs/s08c-isoq10-iso.png', row=1, col=3, caption='Cylinder with strake b')
+slide.add_image('figs/c08c-isoq10-iso.webp', row=1, col=1, caption='Original Cylinder without strakes')
+slide.add_image('figs/s05c-isoq10-iso.webp', row=1, col=2, caption='Cylinder with strake a')
+slide.add_image('figs/s08c-isoq10-iso.webp', row=1, col=3, caption='Cylinder with strake b')
 
 slide.add_text(
 """You can build a customizable grid using various cell types, featuring:\n\n

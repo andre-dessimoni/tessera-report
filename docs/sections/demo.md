@@ -11,25 +11,8 @@ The code used to generate it is shown in the sequence.
 ---
 
 ```{raw} html
-<div style="
-  width: 65vw;
-  position: relative;
-  padding: 0 1rem;
-  box-sizing: border-box;
-">
-  <iframe
-    src="../_static/example1.html"
-    style="
-      display: block;
-      width: 100%;
-      height: 600px;
-      border: 1px solid var(--color-background-border, #ccc);
-      border-radius: 8px;
-    "
-    loading="lazy"
-    allowfullscreen
-  ></iframe>
-</div>
+<iframe class="tessera-embed" src="../_static/example1.html"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 ---

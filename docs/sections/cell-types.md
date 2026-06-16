@@ -17,7 +17,10 @@ slide.add_text(
 )
 ```
 
-![Cell-type-text](../_static/img/cell_types/cell_text.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#text"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -34,7 +37,10 @@ slide.add_metric(
 )
 ```
 
-![Cell-type-metric](../_static/img/cell_types/cell_metric.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#metric"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -56,7 +62,10 @@ import pandas as pd
 slide.add_table(pd.read_csv("data.csv"))
 ```
 
-![Cell-type-table](../_static/img/cell_types/cell_table.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#table"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -74,7 +83,10 @@ slide.add_image(
 
 In `self_contained=True` mode, local images are embedded as base64.
 
-![Cell-type-image](../_static/img/cell_types/cell_image.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#image"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -90,7 +102,10 @@ slide.add_image_slider(
 )
 ```
 
-![Cell-type-image-slider](../_static/img/cell_types/cell_image_slider.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#image-slider"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -117,7 +132,10 @@ Although we can create lists using markdown on `Text` cells, the `add_list` meth
 may be more straight forward to add items from code data structures, instead of relying
 on string interpolation.
 
-![Cell-type-list](../_static/img/cell_types/cell_list.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#list"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -134,7 +152,10 @@ slide.add_code(
 )
 ```
 
-![Cell-type-code](../_static/img/cell_types/cell_code.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#code"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -150,7 +171,10 @@ fig = px.scatter(px.data.iris(), x="sepal_width", y="sepal_length", color="speci
 slide.add_plotly(fig, caption="Iris Dataset")
 ```
 
-![Cell-type-plotly](../_static/img/cell_types/cell_plotly.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#plotly"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -207,7 +231,10 @@ gantt
 
 ```
 
-![Cell-type-mermaid](../_static/img/cell_types/cell_mermaid.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#mermaid"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -218,12 +245,22 @@ Raw HTML injected without escaping — full styling freedom.
 ```python
 slide = slides.add_slide('HTML Cell example', ncols=2, nrows=2)
 slide.add_html("""
+<style>
+@keyframes tsa-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.18);opacity:.6} }
+@keyframes tsa-glow  { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0)} 50%{box-shadow:0 0 0 4px rgba(239,68,68,.22)} }
+@keyframes tsa-slide { 0%{left:-40%} 100%{left:100%} }
+.tsa-live { display:inline-block; animation:tsa-pulse 2s ease-in-out infinite; }
+.tsa-crit { animation:tsa-glow 1.6s ease-in-out infinite; }
+.tsa-bar  { position:relative; height:4px; margin-top:6px; border-radius:2px; background:#fecaca; overflow:hidden; }
+.tsa-bar::after { content:""; position:absolute; top:0; left:-40%; width:40%; height:100%;
+                  border-radius:2px; background:#ef4444; animation:tsa-slide 1.3s ease-in-out infinite; }
+</style>
 <div style="padding:1rem; display:flex; flex-direction:column; gap:0.75rem;
             font-family:sans-serif;">
 
   <div style="display:flex; gap:0.75rem; align-items:flex-start; padding:0.85rem 1rem;
               background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;">
-    <span style="font-size:1.2rem">&#x2705;</span>
+    <span class="tsa-live" style="font-size:1.2rem">&#x2705;</span>
     <div>
       <div style="font-weight:600; color:#15803d">Deploy v2.4.1 — successful</div>
       <div style="font-size:0.82rem; color:#166534">All regions live · 0 errors detected</div>
@@ -239,12 +276,13 @@ slide.add_html("""
     </div>
   </div>
 
-  <div style="display:flex; gap:0.75rem; align-items:flex-start; padding:0.85rem 1rem;
+  <div class="tsa-crit" style="display:flex; gap:0.75rem; align-items:flex-start; padding:0.85rem 1rem;
               background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">
     <span style="font-size:1.2rem">&#x1F534;</span>
-    <div>
+    <div style="flex:1">
       <div style="font-weight:600; color:#b91c1c">DB timeout — us-east-1</div>
       <div style="font-size:0.82rem; color:#991b1b">Failover in progress · ETA 3 min</div>
+      <div class="tsa-bar"></div>
     </div>
   </div>
 
@@ -252,7 +290,10 @@ slide.add_html("""
 """)
 ```
 
-![Cell-type-html](../_static/img/cell_types/cell_html.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#html"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -267,7 +308,10 @@ slide.add_iframe(
 )
 ```
 
-![Cell-type-iframe](../_static/img/cell_types/cell_iframe.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#iframe"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 
 ---
@@ -283,4 +327,7 @@ slide.add_text("Text")                               # col 2, row 1
 slide.add_empty()                                    # col 2, row 2 — empty space
 ```
 
-![Cell-type-empty](../_static/img/cell_types/cell_empty.png)
+```{raw} html
+<iframe class="tessera-embed" src="../_static/slides/cell_types.html#empty"
+        loading="lazy" allowfullscreen></iframe>
+```
