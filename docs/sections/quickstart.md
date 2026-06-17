@@ -104,6 +104,21 @@ To position manually:
 slide.add_image("photo.png", col=2, row=1, rowspan=2)
 ```
 
+## Preview in a notebook
+
+In Jupyter, return a deck, slide, or cell as a cell's last expression to render
+it inline — no file written. A single slide doubles as a **layout for cell
+outputs**: drop a few cells on its grid and display it.
+
+```python
+slide = deck.add_slide("Run 42", nrows=1, ncols=2)
+slide.add_metric(value=0.94, label="Accuracy", delta=+0.02)
+slide.add_plotly(fig)
+slide   # renders a laid-out mini-dashboard as the cell output
+```
+
+See [Live editing](live-editing.md) for more.
+
 ## Plugins
 
 Some cell types require a plugin declared on `HTMLSlides`:

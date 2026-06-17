@@ -21,6 +21,29 @@ Each preview is embedded in an isolated `<iframe>` so the deck's styling and
 scripts never leak into the notebook. Slide and cell previews reuse the deck's
 theme and plugins.
 
+### Laying out cell outputs
+
+Because a single slide previews on its own, you can use tessera purely as a
+**layout engine for notebook outputs** — build one slide, drop a few cells onto
+its grid, and return it as the cell's last expression. No file is written:
+
+```python
+import plotly.express as px
+from tessera import HTMLSlides, Plugin
+
+deck  = HTMLSlides(title="scratch", plugins=[Plugin("plotly", "cdn")])
+slide = deck.add_slide("Run 42", nrows=1, ncols=3)
+
+slide.add_metric(value=0.94, label="Accuracy", delta=+0.02)
+slide.add_plotly(px.line(df, x="epoch", y="loss"))
+slide.add_table(summary_df)
+
+slide   # ← renders a laid-out mini-dashboard as the cell output
+```
+
+This gives you a tidy grid of metrics, charts, and tables in a single cell —
+handy for experiment summaries — without leaving the notebook.
+
 ## Autosave
 
 Pass `autosave` with a filename to have tessera write the HTML file automatically
