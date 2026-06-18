@@ -1,6 +1,6 @@
-"""Tests for Jupyter previews: _repr_html_ on HTMLSlides, Slide, and Cell."""
+"""Tests for Jupyter previews: _repr_html_ on Deck, Slide, and Cell."""
 
-from tessera import HTMLSlides, Plugin
+from tessera import Deck, Plugin
 from tessera.utils.notebook import iframe_srcdoc, preview_error
 
 
@@ -25,11 +25,11 @@ def test_preview_error_never_raises():
 
 
 # ---------------------------------------------------------------------------
-# HTMLSlides._repr_html_
+# Deck._repr_html_
 # ---------------------------------------------------------------------------
 
 def test_deck_repr_html_is_iframe():
-    deck = HTMLSlides(title="Repr Demo")
+    deck = Deck(title="Repr Demo")
     deck.add_title("Cover")
     html = deck._repr_html_()
     assert "<iframe" in html
@@ -39,7 +39,7 @@ def test_deck_repr_html_is_iframe():
 
 def test_deck_repr_html_includes_sidebar():
     # Full deck preview keeps the navigation chrome.
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_slide("S", nrows=1, ncols=1).add_text("x")
     html = deck._repr_html_()
     assert "&lt;nav id=&quot;sidebar&quot;&gt;" in html
@@ -50,7 +50,7 @@ def test_deck_repr_html_includes_sidebar():
 # ---------------------------------------------------------------------------
 
 def test_slide_repr_html_is_iframe_with_title():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("Results Dashboard", nrows=1, ncols=1)
     s.add_text("body")
     html = s._repr_html_()
@@ -60,7 +60,7 @@ def test_slide_repr_html_is_iframe_with_title():
 
 def test_slide_repr_html_is_chromeless():
     # Single-slide preview drops the sidebar/toolbar.
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("S", nrows=1, ncols=1)
     s.add_text("x")
     html = s._repr_html_()
@@ -72,7 +72,7 @@ def test_slide_repr_html_is_chromeless():
 # ---------------------------------------------------------------------------
 
 def test_cell_repr_html_contains_content():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("S", nrows=2, ncols=2)
     cell = s.add_text("UNIQUECELLTEXT")
     html = cell._repr_html_()
@@ -81,14 +81,14 @@ def test_cell_repr_html_contains_content():
 
 
 def test_cell_back_reference_set_on_add():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("S", nrows=1, ncols=1)
     cell = s.add_text("x")
     assert cell._slide is s
 
 
 def test_cell_preview_restores_params():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("S", nrows=2, ncols=2)
     cell = s.add_text("hi", col=2, row=2)
     before = (cell.params.col, cell.params.row, cell.params.colspan, cell.params.rowspan)
@@ -99,7 +99,7 @@ def test_cell_preview_restores_params():
 
 
 def test_cell_preview_renders_at_origin():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("S", nrows=3, ncols=3)
     cell = s.add_text("x", col=3, row=3)
     html = cell._repr_html_()
@@ -107,7 +107,7 @@ def test_cell_preview_renders_at_origin():
 
 
 def test_plugin_cell_preview_does_not_raise():
-    deck = HTMLSlides(title="X", plugins=[Plugin("plotly", "cdn")])
+    deck = Deck(title="X", plugins=[Plugin("plotly", "cdn")])
     px = __import__("plotly.express", fromlist=["scatter"])
     s = deck.add_slide("S", nrows=1, ncols=1)
     fig = px.scatter(x=[1, 2], y=[3, 4], title="PreviewScatterXYZ")

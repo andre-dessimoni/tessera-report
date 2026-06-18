@@ -25,6 +25,7 @@ from tessera.exceptions import InvalidDataError
 
 def params(**kwargs) -> CellParams:
     base = dict(
+        cell_id="_cell-1",
         col=1, row=1, colspan=1, rowspan=1,
         caption="", overflow=True, copy_button=False,
         expand_button=False, transparent=False,
@@ -299,24 +300,24 @@ def test_valign_middle_via_slide(deck):
 
 
 def test_halign_center_inherited_from_cell_defaults():
-    from tessera import CellDefaults, HTMLSlides
-    deck = HTMLSlides(title="X", cell_defaults=CellDefaults(halign="center"))
+    from tessera import CellDefaults, Deck
+    deck = Deck(title="X", cell_defaults=CellDefaults(halign="center"))
     s = deck.add_slide("S", nrows=1, ncols=1)
     cell = s.add_text("hello")
     assert cell.params.halign == "center"
 
 
 def test_valign_bottom_inherited_from_cell_defaults():
-    from tessera import CellDefaults, HTMLSlides
-    deck = HTMLSlides(title="X", cell_defaults=CellDefaults(valign="bottom"))
+    from tessera import CellDefaults, Deck
+    deck = Deck(title="X", cell_defaults=CellDefaults(valign="bottom"))
     s = deck.add_slide("S", nrows=1, ncols=1)
     cell = s.add_text("hello")
     assert cell.params.valign == "bottom"
 
 
 def test_per_cell_halign_overrides_default():
-    from tessera import CellDefaults, HTMLSlides
-    deck = HTMLSlides(title="X", cell_defaults=CellDefaults(halign="center"))
+    from tessera import CellDefaults, Deck
+    deck = Deck(title="X", cell_defaults=CellDefaults(halign="center"))
     s = deck.add_slide("S", nrows=1, ncols=2)
     c1 = s.add_text("default")
     c2 = s.add_text("override", halign="right")

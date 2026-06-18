@@ -1,7 +1,7 @@
 """
 tessera.core.assembler
 =======================
-Consumes a populated ``HTMLSlides`` instance and writes the final .html file.
+Consumes a populated ``Deck`` instance and writes the final .html file.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from tessera.cells import ImageCell, ImageSliderCell
 from tessera.utils.theme_resolver import ThemeResolver
 
 if TYPE_CHECKING:
-    from tessera.core.slides import HTMLSlides
+    from tessera.core.deck import Deck
 
 
 def _templates_dir() -> Path:
@@ -28,7 +28,7 @@ def _static_dir() -> Path:
 
 
 class Assembler:
-    def __init__(self, deck: "HTMLSlides") -> None:
+    def __init__(self, deck: "Deck") -> None:
         self.deck = deck
         self._env = self._build_jinja_env()
 

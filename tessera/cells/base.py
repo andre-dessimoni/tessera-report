@@ -104,8 +104,8 @@ class Cell(ABC):
             if src is not None:
                 deck = src._preview_clone([])
             else:
-                from tessera.core.slides import HTMLSlides, Plugin
-                deck = HTMLSlides(
+                from tessera.core.deck import Deck, Plugin
+                deck = Deck(
                     title="cell",
                     plugins=[Plugin(n, "cdn") for n in
                              ("plotly", "mermaid", "highlight", "mathjax")],

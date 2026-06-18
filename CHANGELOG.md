@@ -4,9 +4,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- **Renamed the PyPI distribution `tessera-slides` → `tessera-report`.** The
+  import package is unchanged (`import tessera`). Install with
+  `pip install tessera-report`. The old `tessera-slides` distribution continues
+  to install a deprecation shim that depends on `tessera-report`.
+- **Renamed the main class `HTMLSlides` → `Deck`** (no alias; update
+  `from tessera import HTMLSlides` to `from tessera import Deck`). The internal
+  module `tessera.core.slides` moved to `tessera.core.deck`.
+- Repositioned the library toward **self-contained, interactive HTML reports for
+  batch-generated data/ML output** (was framed as "HTML slideshows").
+- Fixed `__version__` resolution, which previously looked up the wrong
+  distribution name and always fell back to `0.0.0.dev`.
+
 ### Added
 
-- `_repr_html_` on `HTMLSlides`, `Slide`, and `Cell` for inline previews in
+- `_repr_html_` on `Deck`, `Slide`, and `Cell` for inline previews in
   Jupyter notebooks: return a deck, slide, or cell as a cell's last expression to
   render it in a sandboxed iframe (slide/cell previews are chrome-free and reuse
   the deck's theme and plugins).
@@ -31,15 +45,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   and `add_toc`, mirroring `slide_id` — re-running a notebook cell replaces the
   slide in place instead of appending a duplicate. Overwriting a section also
   updates its table-of-contents entry in place rather than duplicating it.
-- Fixed-size "stage" mode: pass `size=(width, height)` to `HTMLSlides` to render
+- Fixed-size "stage" mode: pass `size=(width, height)` to `Deck` to render
   slides at fixed pixel dimensions, scaled with a CSS transform to fit the window
   — fonts, images, and layout scale together like a static PDF. Options:
   `scale_up` (allow growing past 1:1) and `keep_aspect_ratio` (uniform letterbox
   vs. stretch-to-fill). Modal and lightbox stay unscaled.
-- `show_sidebar` and `show_toolbar` options on `HTMLSlides` (both default
+- `show_sidebar` and `show_toolbar` options on `Deck` (both default
   `True`). Disable them for clean single-slide / embeddable files — e.g. the
   slides shown inline in the documentation.
-- `sidebar_collapsed` option on `HTMLSlides` (default `False`) to start with the
+- `sidebar_collapsed` option on `Deck` (default `False`) to start with the
   sidebar collapsed while keeping it toggleable. A remembered toggle state takes
   precedence over this default.
 - Sidebar navigation aids: a regex **search box** that live-filters slides

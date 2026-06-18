@@ -1,12 +1,12 @@
 import pytest
 
-from tessera import CellDefaults, HTMLSlides, Plugin, SlideDefaults
+from tessera import CellDefaults, Deck, Plugin, SlideDefaults
 
 
 @pytest.fixture
 def deck():
-    """HTMLSlides instance with all plugins declared."""
-    return HTMLSlides(
+    """Deck instance with all plugins declared."""
+    return Deck(
         title="Test Deck",
         author="Tester",
         plugins=[

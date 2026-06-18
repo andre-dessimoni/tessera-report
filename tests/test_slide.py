@@ -2,7 +2,7 @@
 
 import pytest
 
-from tessera import HTMLSlides, Plugin
+from tessera import Deck, Plugin
 from tessera.core.slide import Slide, _normalize_sizes
 from tessera.exceptions import CellPlacementError
 
