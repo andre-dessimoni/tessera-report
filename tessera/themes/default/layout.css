@@ -303,8 +303,20 @@ body.sb-no-transition #sidebar-resize-handle {
   left: var(--sidebar-width);
   right: 0;
   bottom: var(--toolbar-height);
-  overflow: hidden;
+  overflow: auto;   /* scrollbars appear when the deck is zoomed in (fluid mode) */
   transition: left 0.2s ease;
+}
+
+/* The .stage wrapper is transparent in fluid mode (children flow into .slide as
+   before); in fixed-size mode it becomes the native-size, transform-scaled stage
+   inside a layout-sized .slide (see the .fixed-size rules below). */
+.stage { display: contents; }
+
+/* Deck-area zoom (toolbar control). Fluid slides scale via CSS zoom so the
+   layout reflows and #main shows scrollbars when zoomed in. Fixed-size stages
+   scale through the transform fit instead (see main.js fitStage). */
+body:not(.fixed-size) .slide {
+  zoom: var(--deck-zoom, 1);
 }
 
 /* ---- Hidden sidebar / toolbar (single-slide / embeddable) ---- */
@@ -341,18 +353,40 @@ body.sb-collapsed {
    Modal & lightbox live outside #main, so they stay unscaled. */
 .fixed-size #main {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  /* `safe` keeps the stage reachable (scrollable to the top-left) when it is
+     zoomed larger than the viewport, instead of clipping the start. */
+  align-items: safe center;
+  justify-content: safe center;
+  overflow: auto;
+}
+
+/* Fixed-size: the .slide is an outer box whose *layout* size equals the scaled
+   stage, so #main shows scrollbars / pans when zoomed in. The inner .stage keeps
+   its native pixel size and is scaled with a transform (same crisp rendering as
+   before — content lays out at native size, then scales). */
+.fixed-size .slide {
+  width:  calc(var(--stage-w) * var(--stage-sx, 1));
+  height: calc(var(--stage-h) * var(--stage-sy, 1));
+  flex: none;
+  padding: 0;
   overflow: hidden;
 }
 
-.fixed-size .slide {
-  width: var(--stage-w);
+.fixed-size .slide.active { display: block; }
+
+.fixed-size .stage {
+  display: flex;
+  flex-direction: column;
+  width:  var(--stage-w);
   height: var(--stage-h);
-  flex: none;
+  padding: 20px 24px 12px;   /* matches the base .slide padding, scaled with the stage */
   transform: scale(var(--stage-sx, 1), var(--stage-sy, 1));
-  transform-origin: center center;
+  transform-origin: top left;
 }
+
+.fixed-size #main.can-pan { cursor: grab; }
+.fixed-size #main.panning { cursor: grabbing; }
+.fixed-size #main.panning .stage { cursor: grabbing; }
 
 /* ---- Toolbar ---- */
 #toolbar {
@@ -418,6 +452,25 @@ body.sb-collapsed {
 @container (max-width: 540px) {
   #toolbar-credit { display: none; }
 }
+
+/* Zoom controls (− 🔍100% +) */
+#zoom-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#btn-zoom-reset {
+  min-width: 4.6em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;   /* steady width as the % changes */
+}
+
+#zoom-level { display: inline-block; }
 
 #slide-input {
   width: 44px;

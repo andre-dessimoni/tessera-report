@@ -12,6 +12,11 @@
   let current = 0;
   var _savedSidebarWidth = "220px";
 
+  // Deck-area zoom (toolbar +/- controls). Scales only the slide content, not
+  // the sidebar/toolbar. 1 = 100%.
+  var _deckZoom = 1;
+  var ZOOM_MIN = 0.25, ZOOM_MAX = 4, ZOOM_STEP = 1.25;
+
   // -- Initialisation -------------------------------------
   function init() {
     if (slides.length === 0) return;
@@ -30,6 +35,7 @@
     initSidebar();
     initSidebarSections();
     initStage();
+    applyDeckZoom();
   }
 
   // -- Fixed-size stage (scale-to-fit) --------------------
@@ -49,8 +55,42 @@
     if (!scaleUp) { sx = Math.min(1, sx); sy = Math.min(1, sy); }
     if (keepAspect) { sx = sy = Math.min(sx, sy); }
 
+    // Deck-area zoom multiplies the fit (fixed-size stages scale via transform).
+    sx *= _deckZoom; sy *= _deckZoom;
+
     body.style.setProperty("--stage-sx", sx);
     body.style.setProperty("--stage-sy", sy);
+
+    // When the scaled stage is larger than the viewport, #main scrolls — flag it
+    // so the cursor shows it is grab-pannable.
+    var over = (W * sx > main.clientWidth + 1) || (H * sy > main.clientHeight + 1);
+    main.classList.toggle("can-pan", over);
+  }
+
+  // Drag-to-pan the zoomed stage. Native scrollbars/wheel also work; this adds
+  // grab-panning from empty (non-interactive) areas without hijacking clicks on
+  // cells, links, inputs, or Plotly charts.
+  function initStagePan() {
+    var main = document.getElementById("main");
+    if (!main) return;
+    var dragging = false, startX, startY, startL, startT;
+    main.addEventListener("mousedown", function (e) {
+      if (e.button !== 0 || !main.classList.contains("can-pan")) return;
+      if (e.target.closest(".cell, a, button, input, textarea, select, .plotly-container")) return;
+      dragging = true;
+      startX = e.clientX; startY = e.clientY;
+      startL = main.scrollLeft; startT = main.scrollTop;
+      main.classList.add("panning");
+      e.preventDefault();
+    });
+    document.addEventListener("mousemove", function (e) {
+      if (!dragging) return;
+      main.scrollLeft = startL - (e.clientX - startX);
+      main.scrollTop  = startT - (e.clientY - startY);
+    });
+    document.addEventListener("mouseup", function () {
+      if (dragging) { dragging = false; main.classList.remove("panning"); }
+    });
   }
 
   function initStage() {
@@ -64,6 +104,27 @@
     } else {
       window.addEventListener("resize", fitStage);
     }
+    initStagePan();
+  }
+
+  // -- Deck-area zoom (toolbar) ---------------------------
+  function applyDeckZoom() {
+    document.body.style.setProperty("--deck-zoom", _deckZoom);
+    var lvl = document.getElementById("zoom-level");
+    if (lvl) lvl.textContent = Math.round(_deckZoom * 100) + "%";
+    // Fixed-size stages scale through the transform fit; recompute it.
+    if (document.body.classList.contains("fixed-size")) fitStage();
+  }
+
+  function deckZoom(dir) {
+    var z = dir > 0 ? _deckZoom * ZOOM_STEP : _deckZoom / ZOOM_STEP;
+    _deckZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+    applyDeckZoom();
+  }
+
+  function deckZoomReset() {
+    _deckZoom = 1;
+    applyDeckZoom();
   }
 
   // -- Navigation -----------------------------------------
@@ -146,6 +207,9 @@
       case "f": case "F": toggleFullscreen(); break;
       case "g": case "G": toggleOverview(); break;
       case "b": case "B": toggleSidebar(); break;
+      case "+": case "=": deckZoom(1);  break;
+      case "-": case "_": deckZoom(-1); break;
+      case "0": deckZoomReset(); break;
     }
   }
 
@@ -823,6 +887,8 @@
   window.expandAllSections     = expandAllSections;
   window.collapseLevel         = collapseLevel;
   window.expandLevel           = expandLevel;
+  window.deckZoom              = deckZoom;
+  window.deckZoomReset         = deckZoomReset;
 
   // -- Boot -----------------------------------------------
   if (document.readyState === "loading") {
