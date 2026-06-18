@@ -25,10 +25,15 @@ document.addEventListener("DOMContentLoaded", function () {
   symbol.appendChild(path);
   furoSvg.appendChild(symbol);
 
-  // Swap the pencil <use> href to the GitHub mark on every edit link
+  // Turn Furo's "Edit this page" link into a "View on GitHub" link: swap the
+  // pencil <use> for the GitHub mark and repoint the href from the /edit/ view
+  // to the repository root. The root is derived from the edit URL itself so it
+  // survives repository renames (no hardcoded URL).
   document.querySelectorAll("a[href*='github.com'][href*='/edit/']").forEach(function (link) {
     const use = link.querySelector("use");
     if (use) use.setAttribute("href", "#svg-github");
-    link.setAttribute("title", "Edit on GitHub");
+    const m = link.getAttribute("href").match(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\/edit\//);
+    if (m) link.setAttribute("href", m[1]);
+    link.setAttribute("title", "View on GitHub");
   });
 });
