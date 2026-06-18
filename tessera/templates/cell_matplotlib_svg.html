@@ -5,13 +5,19 @@
     grid-row:    {{ cell.params.row }} / span {{ cell.params.rowspan }};
   "
 >
-  {% if cell.params.expand_button %}
+  {% if cell.params.copy_button or cell.params.expand_button %}
   <div class="cell-actions">
+    {% if cell.params.copy_button %}
+    <button class="btn-action" onclick="copyImage(this)" title="Copy image">&#128203;</button>
+    {% endif %}
+    {% if cell.params.expand_button %}
     <button class="btn-action" onclick="expandCell(this)" title="Expand">&#x26F6;</button>
+    {% endif %}
   </div>
   {% endif %}
 
-  <div class="cell-body image-body matplotlib-svg">
+  <div class="cell-body image-body matplotlib-svg{% if cell.lightbox %} lightbox-trigger{% endif %}"
+    {% if cell.lightbox %}onclick="openLightbox(this)"{% endif %}>
     {{ cell.src }}
   </div>
 

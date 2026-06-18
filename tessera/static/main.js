@@ -329,6 +329,24 @@
   }
 
   /**
+   * Serialize an inline <svg> (e.g. a matplotlib SVG figure) to a data URI so it
+   * can be shown in the lightbox or copied like any other image.
+   */
+  function _svgDataUri(el) {
+    var svg = el.tagName && el.tagName.toLowerCase() === "svg" ? el : el.querySelector("svg");
+    if (!svg) return "";
+    var s = new XMLSerializer().serializeToString(svg);
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
+  }
+
+  /** Resolve the displayable image src of a trigger element (<img> or inline SVG). */
+  function _imgSrc(el) {
+    if (!el) return "";
+    if (el.tagName === "IMG") return el.src;
+    return _svgDataUri(el);
+  }
+
+  /**
    * Collects all images from the current slide (cell-image + sliders).
    * Returns [{src, alt}].
    */
@@ -336,9 +354,10 @@
     var currentSlide = slides[current];
     if (!currentSlide) return [];
     var imgs = [];
-    // Regular images (cell-image)
-    currentSlide.querySelectorAll(".cell-image .lightbox-trigger").forEach(function(img) {
-      imgs.push({ src: img.src, alt: img.alt || "" });
+    // Regular images and inline-SVG figures (cell-image)
+    currentSlide.querySelectorAll(".cell-image .lightbox-trigger").forEach(function(el) {
+      var src = _imgSrc(el);
+      if (src) imgs.push({ src: src, alt: el.getAttribute("alt") || "" });
     });
     // Sliders: collect all images from each slider
     currentSlide.querySelectorAll(".cell-image-slider .slider-img").forEach(function(img) {
@@ -349,7 +368,7 @@
 
   function openLightbox(imgEl) {
     _lb.images = _collectSlideImages();
-    var src = imgEl.src;
+    var src = _imgSrc(imgEl);
     _lb.index = _lb.images.findIndex(function(im) { return im.src === src; });
     if (_lb.index < 0) { _lb.index = 0; }
     _lbShow();
@@ -802,6 +821,70 @@
     }
   }
 
+  function _flashAction(btn, ok) {
+    if (!btn) return;
+    var prev = btn.innerHTML;
+    btn.innerHTML = ok ? "&#10003;" : "&#10007;";
+    setTimeout(function() { btn.innerHTML = prev; }, 1100);
+  }
+
+  /**
+   * Copy a figure / image cell's picture to the clipboard as a PNG. Works for
+   * <img> data URIs (PNG/WebP/SVG) and inline-SVG matplotlib figures by drawing
+   * onto a canvas. Falls back to copying the src URL as text (e.g. a tainted
+   * cross-origin remote image that can't be read back from the canvas).
+   */
+  function copyImage(btn) {
+    var cell = btn.closest(".cell");
+    if (!cell) return;
+    // For a slider, copy the currently visible slide; otherwise the cell image.
+    var el = null;
+    var sliderImgs = cell.querySelectorAll(".slider-img");
+    sliderImgs.forEach(function(img) { if (!el && img.offsetParent !== null) el = img; });
+    if (!el) {
+      el = cell.querySelector("img.cell-img")
+        || cell.querySelector(".matplotlib-svg")
+        || cell.querySelector("img, svg");
+    }
+    var src = _imgSrc(el);
+    if (!src) return;
+
+    var canCopyImg = navigator.clipboard && window.ClipboardItem;
+    if (!canCopyImg) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(src).then(function() { _flashAction(btn, true); },
+                                               function() { _flashAction(btn, false); });
+      }
+      return;
+    }
+
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function() {
+      try {
+        var canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || img.width || 1;
+        canvas.height = img.naturalHeight || img.height || 1;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        canvas.toBlob(function(blob) {
+          if (!blob) { _flashAction(btn, false); return; }
+          navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+            .then(function() { _flashAction(btn, true); },
+                  function() { _flashAction(btn, false); });
+        }, "image/png");
+      } catch (e) {
+        // Canvas tainted (cross-origin) — fall back to copying the URL.
+        navigator.clipboard.writeText(src).then(function() { _flashAction(btn, true); },
+                                               function() { _flashAction(btn, false); });
+      }
+    };
+    img.onerror = function() {
+      navigator.clipboard.writeText(src).then(function() { _flashAction(btn, true); },
+                                             function() { _flashAction(btn, false); });
+    };
+    img.src = src;
+  }
+
   // -- Plotly ----------------------------------------------
   // Pull text/grid colours from the active theme's CSS variables so Plotly
   // stays legible on light themes (where the old hardcoded light-grey font was
@@ -879,6 +962,7 @@
   window.lbNavThumb            = lbNavThumb;
   window.lbResetZoom           = lbResetZoom;
   window.copyCell              = copyCell;
+  window.copyImage             = copyImage;
   window.sliderNav             = sliderNav;
   window.filterSidebar         = filterSidebar;
   window.toggleSection         = toggleSection;
