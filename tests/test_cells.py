@@ -34,6 +34,19 @@ def params(**kwargs) -> CellParams:
     return CellParams(**base)
 
 
+def metric(**kwargs) -> MetricCell:
+    """Build a MetricCell, filling the styling args with add_metric's defaults."""
+    base = dict(
+        value=0, label="", delta=None, delta_label="",
+        lower_is_better=False,
+        symbol_good="▲", symbol_bad="▼", symbol_neutral="—",
+        color_good="#4ade80", color_bad="#f87171", color_neutral="",
+        params=params(),
+    )
+    base.update(kwargs)
+    return MetricCell(**base)
+
+
 # ---------------------------------------------------------------------------
 # TextCell
 # ---------------------------------------------------------------------------
@@ -62,25 +75,25 @@ def test_text_cell_params_stored():
 # ---------------------------------------------------------------------------
 
 def test_metric_stores_value_and_label():
-    c = MetricCell(value=99.5, label="Score", delta=None, delta_label="", params=params())
+    c = metric(value=99.5, label="Score")
     assert c.value == 99.5
     assert c.label == "Score"
     assert c.delta is None
 
 
 def test_metric_positive_delta():
-    c = MetricCell(value=100, label="L", delta=+5.2, delta_label="vs last month", params=params())
+    c = metric(value=100, label="L", delta=+5.2, delta_label="vs last month")
     assert c.delta == pytest.approx(5.2)
     assert c.delta_label == "vs last month"
 
 
 def test_metric_negative_delta():
-    c = MetricCell(value=80, label="L", delta=-3, delta_label="", params=params())
+    c = metric(value=80, label="L", delta=-3)
     assert c.delta == -3
 
 
 def test_metric_string_value():
-    c = MetricCell(value="4.8 ★", label="Rating", delta=None, delta_label="", params=params())
+    c = metric(value="4.8 ★", label="Rating")
     assert c.value == "4.8 ★"
 
 
