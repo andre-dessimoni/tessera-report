@@ -394,11 +394,14 @@ body.sb-collapsed {
   color: var(--color-text-muted);
 }
 
-/* Right-aligned "Made with tessera" credit (margin-left:auto pushes it to the
-   far right while the navigation controls stay centred). */
+/* "Made with tessera" credit, pinned to the right of the toolbar. Absolutely
+   positioned (relative to the fixed #toolbar) so it is out of the flex flow and
+   the navigation controls keep their centred layout. */
 #toolbar-credit {
-  margin-left: auto;
-  padding-right: 6px;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 0.72rem;
   color: var(--color-text-muted);
   text-decoration: none;
