@@ -94,11 +94,17 @@
     revealActiveSidebarItem();
   }
 
-  // Step to the nearest *visible* sidebar item in the direction of delta,
-  // so arrow keys / prev-next skip search-filtered and collapsed-away slides.
+  // Step in the direction of delta. While a search filter is active, skip
+  // non-matching (hidden) items. Otherwise step to the immediate neighbour even
+  // if it sits inside a collapsed section — goTo() -> revealActiveSidebarItem()
+  // expands its ancestors so arrow keys can move into and unfold a folded node.
   function navigate(delta) {
-    var items = document.querySelectorAll(".sidebar-item");
     var step = delta < 0 ? -1 : 1;
+    if (!_searchActive) {
+      goTo(current + step);
+      return;
+    }
+    var items = document.querySelectorAll(".sidebar-item");
     var i = current + step;
     while (i >= 0 && i < slides.length) {
       var it = items[i];
@@ -733,18 +739,33 @@
   }
 
   // -- Plotly ----------------------------------------------
+  // Pull text/grid colours from the active theme's CSS variables so Plotly
+  // stays legible on light themes (where the old hardcoded light-grey font was
+  // invisible). Axes inherit the font colour and a muted grid colour.
+  function _plotlyThemeColors() {
+    var cs = getComputedStyle(document.body);
+    var text = (cs.getPropertyValue("--color-text") || "").trim() || "#eaeaea";
+    var grid = (cs.getPropertyValue("--color-border") || "").trim() || "rgba(128,128,128,.3)";
+    return { text: text, grid: grid };
+  }
+
   function initPlotlyCharts() {
     if (typeof Plotly === "undefined") return;
+    var c = _plotlyThemeColors();
+    var axis = { gridcolor: c.grid, zerolinecolor: c.grid, linecolor: c.grid };
     var containers = document.querySelectorAll(".plotly-container");
     containers.forEach(function(el) {
       try {
         var raw = el.getAttribute("data-fig");
         if (!raw) return;
         var fig = JSON.parse(raw);
-        var layout = Object.assign({}, fig.layout || {}, {
+        var base = fig.layout || {};
+        var layout = Object.assign({}, base, {
           paper_bgcolor: "rgba(0,0,0,0)",
           plot_bgcolor:  "rgba(0,0,0,0)",
-          font: { color: "#eaeaea" },
+          font: Object.assign({ color: c.text }, base.font || {}, { color: c.text }),
+          xaxis: Object.assign({}, axis, base.xaxis || {}),
+          yaxis: Object.assign({}, axis, base.yaxis || {}),
           margin: { t: 30, r: 10, b: 40, l: 50 },
           autosize: true,
         });
