@@ -1,22 +1,22 @@
 """
 tessera
 =======
-Python library for generating self-contained HTML slideshows for
-technical engineering documents.
+Python library for generating self-contained, interactive HTML reports
+from data — built for batch-generated ML and analytics output.
 
 Basic usage::
 
-    from tessera import HTMLSlides, Plugin, SlideDefaults, CellDefaults
+    from tessera import Deck, Plugin, SlideDefaults, CellDefaults
 
-    slides = HTMLSlides(title="My Report")
-    slide = slides.add_slide("Results", nrows=1, ncols=2)
+    deck = Deck(title="My Report")
+    slide = deck.add_slide("Results", nrows=1, ncols=2)
     slide.add_text("Hello, world!")
-    slides.write("my-report")
+    deck.write("my-report")
 """
 
 from importlib.metadata import PackageNotFoundError, version
 
-from tessera.core.slides import CellDefaults, HTMLSlides, Plugin, SlideDefaults
+from tessera.core.deck import CellDefaults, Deck, Plugin, SlideDefaults
 from tessera.exceptions import (
     CellPlacementError,
     HtmlSlidesError,
@@ -26,12 +26,12 @@ from tessera.exceptions import (
 )
 
 try:
-    __version__ = version("py-tessera")
+    __version__ = version("tessera-report")
 except PackageNotFoundError:  # running from source without installing
     __version__ = "0.0.0.dev"
 
 __all__ = [
-    "HTMLSlides",
+    "Deck",
     "Plugin",
     "SlideDefaults",
     "CellDefaults",

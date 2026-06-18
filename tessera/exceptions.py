@@ -22,7 +22,7 @@ class CellPlacementError(HtmlSlidesError):
 
 class PluginNotDeclaredError(HtmlSlidesError):
     """
-    Raised when a cell requires a plugin not declared in HTMLSlides.
+    Raised when a cell requires a plugin not declared in Deck.
 
     Example: add_code() without Plugin("highlight") in the plugins list.
     """

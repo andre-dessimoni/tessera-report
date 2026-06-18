@@ -1,7 +1,7 @@
 """
-tessera.core.slides
-====================
-Defines ``HTMLSlides``, ``Plugin``, ``SlideDefaults``, and ``CellDefaults``.
+tessera.core.deck
+=================
+Defines ``Deck``, ``Plugin``, ``SlideDefaults``, and ``CellDefaults``.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ class Plugin:
 
 @dataclass
 class SlideDefaults:
-    """Grid layout defaults applied to every :meth:`~HTMLSlides.add_slide` call.
+    """Grid layout defaults applied to every :meth:`~Deck.add_slide` call.
 
     Any value set here acts as the fallback when the corresponding argument is
     omitted from ``add_slide()``. Per-call arguments always take precedence.
@@ -84,12 +84,12 @@ class CellDefaults:
 
 
 # ---------------------------------------------------------------------------
-# HTMLSlides
+# Deck
 # ---------------------------------------------------------------------------
 
-class HTMLSlides:
+class Deck:
     """
-    Main container for a slideshow.
+    Main container for a report deck.
 
     Arguments:
         title (str):    The presentation title (required).
@@ -147,7 +147,7 @@ class HTMLSlides:
 
     Example::
 
-        slides = HTMLSlides(
+        deck = Deck(
             title="Q3 Report",
             author="J. Smith",
             theme="default",
@@ -155,10 +155,10 @@ class HTMLSlides:
             slide_defaults=SlideDefaults(nrows=2, ncols=2),
             cell_defaults=CellDefaults(expand_button=True),
         )
-        slides.add_title("Q3 Report")
-        slide = slides.add_slide("Results")
+        deck.add_title("Q3 Report")
+        slide = deck.add_slide("Results")
         slide.add_metric(value=98.7, label="Efficiency")
-        slides.write("q3-report")
+        deck.write("q3-report")
     """
 
     def __init__(
@@ -535,7 +535,7 @@ class HTMLSlides:
 
     def __repr__(self) -> str:
         return (
-            f"HTMLSlides(title={self.title!r}, slides={len(self._slides)}, "
+            f"Deck(title={self.title!r}, slides={len(self._slides)}, "
             f"theme={self.theme!r})"
         )
 
@@ -547,7 +547,7 @@ class HTMLSlides:
         self,
         slides: list[Slide],
         sections: list[dict[str, Any]] | None = None,
-    ) -> "HTMLSlides":
+    ) -> "Deck":
         """Build a chrome-free deck cloning this deck's visual configuration.
 
         Used to render single-slide / single-cell previews through the normal
@@ -560,9 +560,9 @@ class HTMLSlides:
                 of section/TOC slide previews).
 
         Returns:
-            A throwaway :class:`HTMLSlides` ready to pass to the Assembler.
+            A throwaway :class:`Deck` ready to pass to the Assembler.
         """
-        clone = HTMLSlides(
+        clone = Deck(
             title=self.title,
             author=self.author,
             date=self.date,

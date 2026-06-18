@@ -2,7 +2,7 @@
 
 import pytest
 
-from tessera import HTMLSlides, Plugin
+from tessera import Deck, Plugin
 from tessera.exceptions import PluginNotDeclaredError
 
 
@@ -11,11 +11,11 @@ from tessera.exceptions import PluginNotDeclaredError
 # ---------------------------------------------------------------------------
 
 def deck_without_plugins():
-    return HTMLSlides(title="Test", plugins=[])
+    return Deck(title="Test", plugins=[])
 
 
 def deck_with(*names):
-    return HTMLSlides(title="Test", plugins=[Plugin(n, "cdn") for n in names])
+    return Deck(title="Test", plugins=[Plugin(n, "cdn") for n in names])
 
 
 # ---------------------------------------------------------------------------

@@ -1,10 +1,10 @@
-"""Tests for HTMLSlides, Plugin, SlideDefaults, CellDefaults."""
+"""Tests for Deck, Plugin, SlideDefaults, CellDefaults."""
 
 import datetime
 
 import pytest
 
-from tessera import CellDefaults, HTMLSlides, Plugin, SlideDefaults
+from tessera import CellDefaults, Deck, Plugin, SlideDefaults
 from tessera.core.slide import Slide
 
 
@@ -13,24 +13,24 @@ from tessera.core.slide import Slide
 # ---------------------------------------------------------------------------
 
 def test_title_stored():
-    deck = HTMLSlides(title="My Deck")
+    deck = Deck(title="My Deck")
     assert deck.title == "My Deck"
 
 
 def test_date_auto_filled():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     assert deck.date == datetime.date.today().isoformat()
 
 
 def test_date_explicit():
-    deck = HTMLSlides(title="X", date="2024-01-15")
+    deck = Deck(title="X", date="2024-01-15")
     assert deck.date == "2024-01-15"
 
 
 def test_plugins_stored():
     p1 = Plugin("plotly", "cdn")
     p2 = Plugin("highlight", "cdn")
-    deck = HTMLSlides(title="X", plugins=[p1, p2])
+    deck = Deck(title="X", plugins=[p1, p2])
     assert len(deck.plugins) == 2
     assert "plotly" in deck._plugin_names
     assert "highlight" in deck._plugin_names
@@ -43,12 +43,12 @@ def test_plugin_defaults():
 
 
 def test_slides_list_starts_empty():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     assert deck.slides == []
 
 
 def test_repr():
-    deck = HTMLSlides(title="Rep", theme="default")
+    deck = Deck(title="Rep", theme="default")
     r = repr(deck)
     assert "Rep" in r
     assert "default" in r
@@ -59,20 +59,20 @@ def test_repr():
 # ---------------------------------------------------------------------------
 
 def test_add_title_returns_slide():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_title("Cover")
     assert isinstance(s, Slide)
     assert s.slide_type == "title"
 
 
 def test_add_title_appended():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_title("Cover")
     assert len(deck.slides) == 1
 
 
 def test_add_title_grid_is_1x1():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_title("Cover")
     assert s.nrows == 1
     assert s.ncols == 1
@@ -83,13 +83,13 @@ def test_add_title_grid_is_1x1():
 # ---------------------------------------------------------------------------
 
 def test_add_section_type():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_section("Section 1")
     assert s.slide_type == "section"
 
 
 def test_add_section_registers_in_sections():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("Intro", level=1)
     deck.add_section("Methods", level=2)
     assert len(deck.sections) == 2
@@ -98,7 +98,7 @@ def test_add_section_registers_in_sections():
 
 
 def test_add_section_slide_id_stored():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_section("Sec")
     assert deck.sections[0]["slide_id"] == s.slide_id
 
@@ -108,13 +108,13 @@ def test_add_section_slide_id_stored():
 # ---------------------------------------------------------------------------
 
 def test_add_toc_type():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     t = deck.add_toc()
     assert t.slide_type == "toc"
 
 
 def test_add_toc_auto_captures_sections(tmp_path):
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("A")
     deck.add_section("B")
     toc = deck.add_toc(auto=True)
@@ -124,7 +124,7 @@ def test_add_toc_auto_captures_sections(tmp_path):
 
 
 def test_add_toc_auto_false_empty(tmp_path):
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("A")
     toc = deck.add_toc(auto=False)
     deck.write(tmp_path / "out")
@@ -132,7 +132,7 @@ def test_add_toc_auto_false_empty(tmp_path):
 
 
 def test_add_toc_captures_all_sections(tmp_path):
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("Before")
     toc = deck.add_toc(auto=True)
     deck.add_section("After")
@@ -146,28 +146,28 @@ def test_add_toc_captures_all_sections(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_add_slide_returns_slide():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s = deck.add_slide("Results")
     assert isinstance(s, Slide)
     assert s.slide_type == "slide"
 
 
 def test_add_slide_uses_defaults():
-    deck = HTMLSlides(title="X", slide_defaults=SlideDefaults(nrows=3, ncols=4))
+    deck = Deck(title="X", slide_defaults=SlideDefaults(nrows=3, ncols=4))
     s = deck.add_slide("S")
     assert s.nrows == 3
     assert s.ncols == 4
 
 
 def test_add_slide_overrides_defaults():
-    deck = HTMLSlides(title="X", slide_defaults=SlideDefaults(nrows=3, ncols=4))
+    deck = Deck(title="X", slide_defaults=SlideDefaults(nrows=3, ncols=4))
     s = deck.add_slide("S", nrows=1, ncols=2)
     assert s.nrows == 1
     assert s.ncols == 2
 
 
 def test_slide_ids_increment():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     s1 = deck.add_title("Cover")
     s2 = deck.add_slide("Slide 1")
     s3 = deck.add_slide("Slide 2")
@@ -178,7 +178,7 @@ def test_slide_ids_increment():
 
 
 def test_slides_property_returns_copy():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_slide("S")
     lst = deck.slides
     lst.append("fake")
@@ -190,7 +190,7 @@ def test_slides_property_returns_copy():
 # ---------------------------------------------------------------------------
 
 def test_overwrite_slide_preserves_position():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_slide("A", slide_id="a")
     deck.add_slide("B", slide_id="b")
     deck.add_slide("C", slide_id="c")
@@ -204,7 +204,7 @@ def test_overwrite_slide_preserves_position():
 
 
 def test_overwrite_title_by_id():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_title("Cover", title_id="cover")
     deck.add_title("Cover v2", title_id="cover")
     titles = [s for s in deck.slides if s.slide_type == "title"]
@@ -213,7 +213,7 @@ def test_overwrite_title_by_id():
 
 
 def test_overwrite_toc_by_id():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_toc(toc_id="toc")
     deck.add_toc(toc_id="toc")
     tocs = [s for s in deck.slides if s.slide_type == "toc"]
@@ -221,7 +221,7 @@ def test_overwrite_toc_by_id():
 
 
 def test_overwrite_section_dedups_toc():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("Alpha", section_id="s0")
     deck.add_section("Intro", section_id="i")
     deck.add_section("Beta", section_id="s2")
@@ -235,7 +235,7 @@ def test_overwrite_section_dedups_toc():
 
 
 def test_section_add_to_toc_flip_removes_entry():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("Intro", section_id="i")
     assert any(s["slide_id"] == "i" for s in deck.sections)
     deck.add_section("Intro", section_id="i", add_to_toc=False)
@@ -243,7 +243,7 @@ def test_section_add_to_toc_flip_removes_entry():
 
 
 def test_remove_slide_purges_section_from_toc():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_section("Intro", section_id="i")
     deck.remove_slide("i")
     assert deck.sections == []
@@ -254,19 +254,19 @@ def test_remove_slide_purges_section_from_toc():
 # ---------------------------------------------------------------------------
 
 def test_size_defaults_to_none():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     assert deck.size is None
     assert deck.scale_up is False
     assert deck.keep_aspect_ratio is True
 
 
 def test_size_stored():
-    deck = HTMLSlides(title="X", size=(1366, 768))
+    deck = Deck(title="X", size=(1366, 768))
     assert deck.size == (1366, 768)
 
 
 def test_fixed_size_markup(tmp_path):
-    deck = HTMLSlides(
+    deck = Deck(
         title="X", size=(1280, 720), scale_up=True, keep_aspect_ratio=False
     )
     deck.add_slide("S").add_text("hi")
@@ -281,7 +281,7 @@ def test_fixed_size_markup(tmp_path):
 
 
 def test_fluid_default_has_no_stage(tmp_path):
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_slide("S").add_text("hi")
     out = deck.write(tmp_path / "out")
     html = out.read_text(encoding="utf-8")
@@ -293,13 +293,13 @@ def test_fluid_default_has_no_stage(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_chrome_defaults_true():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     assert deck.show_sidebar is True
     assert deck.show_toolbar is True
 
 
 def test_default_renders_sidebar_and_toolbar(tmp_path):
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_slide("S").add_text("hi")
     html = deck.write(tmp_path / "out").read_text(encoding="utf-8")
     assert '<nav id="sidebar">' in html
@@ -307,7 +307,7 @@ def test_default_renders_sidebar_and_toolbar(tmp_path):
 
 
 def test_no_sidebar(tmp_path):
-    deck = HTMLSlides(title="X", show_sidebar=False)
+    deck = Deck(title="X", show_sidebar=False)
     deck.add_slide("S").add_text("hi")
     html = deck.write(tmp_path / "out").read_text(encoding="utf-8")
     assert '<nav id="sidebar">' not in html
@@ -318,7 +318,7 @@ def test_no_sidebar(tmp_path):
 
 
 def test_no_toolbar(tmp_path):
-    deck = HTMLSlides(title="X", show_toolbar=False)
+    deck = Deck(title="X", show_toolbar=False)
     deck.add_slide("S").add_text("hi")
     html = deck.write(tmp_path / "out").read_text(encoding="utf-8")
     assert '<footer id="toolbar">' not in html
@@ -326,7 +326,7 @@ def test_no_toolbar(tmp_path):
 
 
 def test_single_slide_chromeless(tmp_path):
-    deck = HTMLSlides(
+    deck = Deck(
         title="X", show_sidebar=False, show_toolbar=False, size=(960, 540)
     )
     deck.add_slide("S").add_text("hi")
@@ -336,7 +336,7 @@ def test_single_slide_chromeless(tmp_path):
 
 
 def test_sidebar_collapsed_default_false():
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     assert deck.sidebar_collapsed is False
 
 
@@ -346,7 +346,7 @@ def _body_tag(html):
 
 
 def test_sidebar_collapsed_adds_body_class(tmp_path):
-    deck = HTMLSlides(title="X", sidebar_collapsed=True)
+    deck = Deck(title="X", sidebar_collapsed=True)
     deck.add_slide("S").add_text("hi")
     html = deck.write(tmp_path / "out").read_text(encoding="utf-8")
     assert "sb-collapsed" in _body_tag(html)
@@ -355,14 +355,14 @@ def test_sidebar_collapsed_adds_body_class(tmp_path):
 
 
 def test_sidebar_collapsed_default_no_class(tmp_path):
-    deck = HTMLSlides(title="X")
+    deck = Deck(title="X")
     deck.add_slide("S").add_text("hi")
     html = deck.write(tmp_path / "out").read_text(encoding="utf-8")
     assert "sb-collapsed" not in _body_tag(html)
 
 
 def test_sidebar_collapsed_ignored_without_sidebar(tmp_path):
-    deck = HTMLSlides(title="X", sidebar_collapsed=True, show_sidebar=False)
+    deck = Deck(title="X", sidebar_collapsed=True, show_sidebar=False)
     deck.add_slide("S").add_text("hi")
     html = deck.write(tmp_path / "out").read_text(encoding="utf-8")
     assert "sb-collapsed" not in _body_tag(html)
@@ -373,7 +373,7 @@ def test_sidebar_collapsed_ignored_without_sidebar(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_cell_defaults_propagated(deck):
-    deck2 = HTMLSlides(
+    deck2 = Deck(
         title="X",
         cell_defaults=CellDefaults(expand_button=True, overflow=False),
     )
@@ -384,7 +384,7 @@ def test_cell_defaults_propagated(deck):
 
 
 def test_cell_default_overridden_per_call(deck):
-    deck2 = HTMLSlides(
+    deck2 = Deck(
         title="X",
         cell_defaults=CellDefaults(expand_button=True),
     )

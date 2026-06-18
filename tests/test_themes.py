@@ -2,7 +2,7 @@
 
 import pytest
 
-from tessera import HTMLSlides
+from tessera import Deck
 from tessera.exceptions import ThemeNotFoundError
 from tessera.utils.theme_resolver import ThemeResolver
 
@@ -94,7 +94,7 @@ def test_academic_has_thin_title_border():
 
 @pytest.mark.parametrize("theme", SUPPORTED_THEMES)
 def test_write_with_theme(tmp_path, theme):
-    deck = HTMLSlides(title="Test", theme=theme)
+    deck = Deck(title="Test", theme=theme)
     s = deck.add_slide("S", nrows=1, ncols=1)
     s.add_metric(value=99, label="Score", delta=+5, delta_label="vs last")
     out = deck.write(tmp_path / f"out_{theme}", open_browser=False)

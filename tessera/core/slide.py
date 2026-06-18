@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     import matplotlib.figure
     import pandas as pd
     import plotly.graph_objects as go
-    from tessera import HTMLSlides
+    from tessera import Deck
 
 from tessera.cells import (
     _UNSET,
@@ -40,7 +40,7 @@ class Slide:
     """
     Represents a slide with a CSS Grid canvas of ``nrows x ncols`` cells.
 
-    Do not instantiate directly — use the ``add_*`` methods of ``HTMLSlides``.
+    Do not instantiate directly — use the ``add_*`` methods of ``Deck``.
     """
 
     def __init__(
@@ -57,7 +57,7 @@ class Slide:
         notes: str,
         cell_defaults: Any,          # CellDefaults — lazy import to avoid circular deps
         plugin_names: frozenset[str],
-        parent: HTMLSlides,
+        parent: Deck,
         level: int = 1,
         show_toc: bool = False,
     ) -> None:
@@ -456,7 +456,7 @@ class Slide:
         if plugin_name not in self._plugin_names:
             raise PluginNotDeclaredError(
                 f"{method_name}() requires Plugin('{plugin_name}'), "
-                f"but it was not declared in HTMLSlides(plugins=[…])"
+                f"but it was not declared in Deck(plugins=[…])"
             )
 
     def __repr__(self) -> str:
