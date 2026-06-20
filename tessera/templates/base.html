@@ -2,7 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  {% if security.csp %}
+  <meta http-equiv="Content-Security-Policy" content="{{ security.csp }}">
+  {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% if security.no_referrer %}
+  <meta name="referrer" content="no-referrer">
+  {% endif %}
+  {% if security.noindex %}
+  <meta name="robots" content="noindex,nofollow">
+  {% endif %}
+  {% if security.permissions_policy %}
+  <meta http-equiv="Permissions-Policy" content="{{ security.permissions_policy }}">
+  {% endif %}
   <meta name="author"  content="{{ deck.author }}">
   <meta name="version" content="{{ deck.version }}">
   <meta name="date"    content="{{ deck.date }}">
@@ -243,16 +255,7 @@
 </div>
 
 <!-- ===================== PLUGINS ===================== -->
-{% if "plotly" in plugin_names %}
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-{% endif %}
-{% if "highlight" in plugin_names %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
-{% endif %}
-{% if "mermaid" in plugin_names %}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-{% endif %}
+{# MathJax config must be defined before the MathJax library loads below. #}
 {% if "mathjax" in plugin_names %}
 <script>
 window.MathJax = {
@@ -260,11 +263,22 @@ window.MathJax = {
   options: { skipHtmlTags: ["script", "noscript", "style", "textarea"] },
 };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 {% endif %}
+{# Plugin libraries — inlined (bundled) or linked (cdn), resolved in the assembler. #}
+{% for a in plugin_assets %}
+{% if a.type == 'css' and a.mode == 'inline' %}
+<style>{{ a.text }}</style>
+{% elif a.type == 'css' %}
+<link rel="stylesheet" href="{{ a.url }}"{% if a.integrity %} integrity="{{ a.integrity }}" crossorigin="anonymous"{% endif %}>
+{% elif a.mode == 'inline' %}
+<script>{{ a.text }}</script>
+{% else %}
+<script src="{{ a.url }}"{% if a.integrity %} integrity="{{ a.integrity }}" crossorigin="anonymous"{% endif %} charset="utf-8"></script>
+{% endif %}
+{% endfor %}
 
 {% if "mermaid" in plugin_names %}
-<script>mermaid.initialize({ startOnLoad: false, theme: "dark" });</script>
+<script>mermaid.initialize({ startOnLoad: false, theme: "{{ plugin_opts.mermaid.theme if plugin_opts.mermaid else 'dark' }}" });</script>
 {% endif %}
 
 <!-- ===================== JS ===================== -->

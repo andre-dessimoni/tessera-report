@@ -15,7 +15,7 @@ class PlotlyCell(Cell):
     """
     Interactive Plotly figure embedded as JSON.
     Effective overflow default: False.
-    Requires Plugin('plotly').
+    Requires Plugins.Plotly().
     """
 
     def __init__(self, fig: "go.Figure", params: CellParams,

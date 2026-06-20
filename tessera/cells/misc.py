@@ -36,7 +36,7 @@ class CodeCell(Cell):
     """
     Code block with syntax highlighting.
     Effective copy_button default: True.
-    Requires Plugin('highlight').
+    Requires Plugins.Highlight().
     """
 
     def __init__(self, code: str, language: str, params: CellParams) -> None:
@@ -128,7 +128,7 @@ class MermaidCell(Cell):
     """
     Mermaid diagram (flowchart, sequenceDiagram, architecture, etc.).
     Effective overflow default: False.
-    Requires Plugin('mermaid').
+    Requires Plugins.Mermaid().
     """
 
     def __init__(self, diagram: str, params: CellParams) -> None:

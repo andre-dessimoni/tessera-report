@@ -2,7 +2,7 @@
 
 import pytest
 
-from tessera import CellDefaults, Deck, Plugin, SlideDefaults
+from tessera import CellDefaults, Deck, Plugins, SlideDefaults
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +159,7 @@ def test_toc_entries_in_output(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_code_cell_in_output(tmp_path):
-    deck = Deck(title="T", plugins=[Plugin("highlight", "cdn")])
+    deck = Deck(title="T", plugins=[Plugins.Highlight(source="cdn")])
     s = deck.add_slide("S", nrows=1, ncols=1)
     s.add_code("x = 42", language="python")
     out = deck.write(tmp_path / "out", open_browser=False)
@@ -194,7 +194,7 @@ def test_default_halign_left_class_in_output(tmp_path):
 
 def test_plotly_cell_in_output(tmp_path):
     px = pytest.importorskip("plotly.express")
-    deck = Deck(title="T", plugins=[Plugin("plotly", "cdn")])
+    deck = Deck(title="T", plugins=[Plugins.Plotly(source="cdn")])
     s = deck.add_slide("S", nrows=1, ncols=1)
     fig = px.scatter(x=[1, 2], y=[3, 4], title="Scatter XYZ")
     s.add_plotly(fig)

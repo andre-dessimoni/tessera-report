@@ -489,9 +489,15 @@ class Slide:
     def _require_plugin(self, plugin_name: str, method_name: str) -> None:
         from tessera.exceptions import PluginNotDeclaredError
         if plugin_name not in self._plugin_names:
+            hint = {
+                "plotly":    "Plugins.Plotly()",
+                "mermaid":   "Plugins.Mermaid()",
+                "highlight": "Plugins.Highlight()",
+                "mathjax":   "Plugins.MathJax()",
+            }.get(plugin_name, f"the '{plugin_name}' plugin")
             raise PluginNotDeclaredError(
-                f"{method_name}() requires Plugin('{plugin_name}'), "
-                f"but it was not declared in Deck(plugins=[…])"
+                f"{method_name}() requires {hint}; declare it in "
+                f"Deck(plugins=[...])."
             )
 
     def __repr__(self) -> str:

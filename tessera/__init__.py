@@ -16,12 +16,22 @@ Basic usage::
 
 from importlib.metadata import PackageNotFoundError, version
 
-from tessera.core.deck import CellDefaults, Deck, Plugin, SlideDefaults
+from tessera.core.deck import CellDefaults, Deck, SlideDefaults
+from tessera.core.plugins import (
+    Highlight,
+    MathJax,
+    Mermaid,
+    Plotly,
+    Plugin,
+    Plugins,
+)
+from tessera.core.security import Security
 from tessera.exceptions import (
     CellPlacementError,
     HtmlSlidesError,
     InvalidDataError,
     PluginNotDeclaredError,
+    SecurityError,
     ThemeNotFoundError,
 )
 
@@ -33,6 +43,12 @@ except PackageNotFoundError:  # running from source without installing
 __all__ = [
     "Deck",
     "Plugin",
+    "Plugins",
+    "Plotly",
+    "Mermaid",
+    "Highlight",
+    "MathJax",
+    "Security",
     "SlideDefaults",
     "CellDefaults",
     "HtmlSlidesError",
@@ -40,5 +56,6 @@ __all__ = [
     "PluginNotDeclaredError",
     "ThemeNotFoundError",
     "InvalidDataError",
+    "SecurityError",
     "__version__",
 ]

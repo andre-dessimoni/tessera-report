@@ -5,7 +5,7 @@ import re
 
 import pytest
 
-from tessera import CellDefaults, Deck, Plugin, SlideDefaults
+from tessera import CellDefaults, Deck, Plugins, SlideDefaults
 from tessera.core.slide import Slide
 
 
@@ -29,8 +29,8 @@ def test_date_explicit():
 
 
 def test_plugins_stored():
-    p1 = Plugin("plotly", "cdn")
-    p2 = Plugin("highlight", "cdn")
+    p1 = Plugins.Plotly(source="cdn")
+    p2 = Plugins.Highlight(source="cdn")
     deck = Deck(title="X", plugins=[p1, p2])
     assert len(deck.plugins) == 2
     assert "plotly" in deck._plugin_names
@@ -38,9 +38,10 @@ def test_plugins_stored():
     assert "mermaid" not in deck._plugin_names
 
 
-def test_plugin_defaults():
-    p = Plugin("mathjax")
-    assert p.source == "bundled"
+def test_plugin_source_defaults_to_inherit():
+    # An unset plugin source inherits the deck-wide default (cdn).
+    assert Plugins.MathJax().source is None
+    assert Deck(title="X").plugin_source == "cdn"
 
 
 def test_slides_list_starts_empty():

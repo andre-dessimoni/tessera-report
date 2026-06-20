@@ -24,7 +24,7 @@ class PluginNotDeclaredError(HtmlSlidesError):
     """
     Raised when a cell requires a plugin not declared in Deck.
 
-    Example: add_code() without Plugin("highlight") in the plugins list.
+    Example: add_code() without Plugins.Highlight() in the plugins list.
     """
 
 
@@ -40,4 +40,15 @@ class InvalidDataError(HtmlSlidesError):
     is invalid or cannot be interpreted.
 
     Example: add_table() receives an unsupported type, or a malformed CSV string.
+    """
+
+
+class SecurityError(HtmlSlidesError):
+    """
+    Raised when a Security(...) constraint cannot be satisfied.
+
+    Cases:
+    - block_external=True but a plugin was explicitly set to source="cdn"
+    - block_external=True but the rendered report still contains an external
+      (http/https) resource URL
     """

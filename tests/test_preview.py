@@ -1,6 +1,6 @@
 """Tests for Jupyter previews: _repr_html_ on Deck, Slide, and Cell."""
 
-from tessera import Deck, Plugin
+from tessera import Deck, Plugins
 from tessera.utils.notebook import iframe_srcdoc, preview_error
 
 
@@ -107,7 +107,7 @@ def test_cell_preview_renders_at_origin():
 
 
 def test_plugin_cell_preview_does_not_raise():
-    deck = Deck(title="X", plugins=[Plugin("plotly", "cdn")])
+    deck = Deck(title="X", plugins=[Plugins.Plotly(source="cdn")])
     px = __import__("plotly.express", fromlist=["scatter"])
     s = deck.add_slide("S", nrows=1, ncols=1)
     fig = px.scatter(x=[1, 2], y=[3, 4], title="PreviewScatterXYZ")

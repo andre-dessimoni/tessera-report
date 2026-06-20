@@ -6,6 +6,9 @@ Consumes a populated ``Deck`` instance and writes the final .html file.
 
 from __future__ import annotations
 
+import os
+import re
+import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,10 +16,24 @@ import jinja2
 from importlib.resources import files as _res_files
 
 from tessera.cells import ImageCell, ImageSliderCell
+from tessera.exceptions import SecurityError
 from tessera.utils.theme_resolver import ThemeResolver
+from tessera.utils.vendor import resolve_plugin
 
 if TYPE_CHECKING:
     from tessera.core.deck import Deck
+
+# Resource-loading external URLs that must not appear when
+# Security(block_external=True). We match things the browser *fetches* — `src=`
+# (script/img/iframe/source/...), stylesheet `<link href>`, and CSS url()/@import
+# — but deliberately NOT bare `<a href>` navigation links (clicking one is
+# user-initiated and transfers no data on load). Trusted inlined library code is
+# stripped before scanning (see _assert_no_external).
+_RESOURCE_URL_RES = (
+    re.compile(r"""\bsrc\s*=\s*["'](https?://[^"']+)""", re.I),
+    re.compile(r"""<link\b[^>]*\bhref\s*=\s*["'](https?://[^"']+)""", re.I),
+    re.compile(r"""(?:url\(\s*["']?|@import\s+["'])(https?://[^"')\s]+)""", re.I),
+)
 
 
 def _templates_dir() -> Path:
@@ -168,6 +185,123 @@ class Assembler:
             lstrip_blocks=True,
         )
 
+    # ------------------------------------------------------------------
+    # Plugin asset resolution (CDN vs bundled) + security view-model
+    # ------------------------------------------------------------------
+
+    def _effective_source(self, plugin) -> str:
+        """The "cdn"/"bundled" mode for ``plugin`` after defaults and security.
+
+        ``block_external`` forces bundling; an *explicit* ``source="cdn"`` under
+        ``block_external`` is a contradiction and raises.
+        """
+        source = plugin.source or self.deck.plugin_source
+        if self.deck.security.block_external:
+            if plugin.source == "cdn":
+                raise SecurityError(
+                    f"Plugin {plugin.name!r} is source='cdn' but "
+                    f"Security(block_external=True) forbids external traffic. "
+                    f"Drop the source override or set source='bundled'."
+                )
+            return "bundled"
+        return source
+
+    def _resolve_plugins(self) -> tuple[list[dict], dict]:
+        """Resolve every declared plugin to template assets + init options.
+
+        Returns ``(plugin_assets, plugin_opts)`` where ``plugin_assets`` is the
+        ordered list of ``<script>``/``<link>`` descriptors and ``plugin_opts``
+        maps a plugin name to its init options (e.g. mermaid theme).
+        """
+        sec = self.deck.security
+        assets: list[dict] = []
+        opts: dict = {}
+        for plugin in self.deck.plugins:
+            source = self._effective_source(plugin)
+            resolved = resolve_plugin(
+                plugin, source=source,
+                self_contained=self.deck.self_contained, sri=sec.sri,
+            )
+            for asset in resolved["assets"]:
+                assets.append(self._materialize_asset(asset))
+            if resolved["options"]:
+                opts[resolved["name"]] = resolved["options"]
+        return assets, opts
+
+    def _materialize_asset(self, asset: dict) -> dict:
+        """Turn a resolved asset into one ready for the template.
+
+        ``inline`` reads the vendored text; ``copy`` writes a sidecar file next
+        to the report and references it (falling back to inline when there is no
+        output path, e.g. during a notebook preview); ``src`` passes through.
+        """
+        mode = asset["mode"]
+        if mode == "src":
+            return asset
+
+        if mode == "inline":
+            return {"type": asset["type"], "mode": "inline",
+                    "text": self._inline_text(asset)}
+
+        # mode == "copy": bundled + not self_contained
+        contents_dir = self._contents_dir()
+        if contents_dir is None:   # preview (no output path) — inline instead
+            return {"type": asset["type"], "mode": "inline",
+                    "text": self._inline_text(asset)}
+        contents_dir.mkdir(parents=True, exist_ok=True)
+        dest = contents_dir / asset["filename"]
+        shutil.copyfile(asset["path"], dest)
+        rel = os.path.relpath(dest, self._output_path.parent).replace(os.sep, "/")
+        return {"type": asset["type"], "mode": "src", "url": f"./{rel}" if not rel.startswith(".") else rel,
+                "integrity": None}
+
+    @staticmethod
+    def _inline_text(asset: dict) -> str:
+        """Read a vendored file for inlining, neutralising any ``</script>`` that
+        would otherwise close the embedding tag early (defensive; current vendored
+        bundles contain none)."""
+        text = Path(asset["path"]).read_text(encoding="utf-8")
+        if asset["type"] == "js":
+            text = re.sub(r"</(script)", r"<\\/\1", text, flags=re.I)
+        return text
+
+    def _security_context(self) -> dict:
+        """Flatten ``deck.security`` into the head-tag values the template needs."""
+        sec = self.deck.security
+        return {
+            "csp":                sec.csp_content(),
+            "permissions_policy": sec.permissions_policy_content(),
+            "no_referrer":        sec.no_referrer,
+            "noindex":            sec.noindex,
+        }
+
+    def _assert_no_external(self, html: str, trusted: list[str]) -> None:
+        """Raise if ``block_external`` is on but the report would *fetch* an
+        external resource on load.
+
+        ``trusted`` holds the inlined library / main.js bodies, which are stripped
+        before scanning: their internal URL *strings* are data, not loads, and are
+        already neutralised by the strict CSP. Everything else — theme/custom CSS,
+        cell content, images — is scanned for real resource URLs.
+        """
+        if not self.deck.security.block_external:
+            return
+        scan = html
+        for block in trusted:
+            if block:
+                scan = scan.replace(block, "")
+        hits = sorted({
+            m.group(1)
+            for rgx in _RESOURCE_URL_RES
+            for m in rgx.finditer(scan)
+        })
+        if hits:
+            raise SecurityError(
+                "Security(block_external=True) but the report still loads "
+                "external resources:\n  " + "\n  ".join(hits) +
+                "\nEmbed them (self_contained=True / bundled plugins) or remove them."
+            )
+
     def _render(self) -> str:
         deck = self.deck
 
@@ -180,6 +314,10 @@ class Assembler:
 
         # Resolve media srcs (and optionally write assets to the contents folder)
         self._finalize_media()
+
+        # Resolve plugin assets (CDN vs bundled) and security head-tag values
+        plugin_assets, plugin_opts = self._resolve_plugins()
+        security_ctx = self._security_context()
 
         # Build full TOC from registered sections
         toc_entries = [
@@ -226,11 +364,18 @@ class Assembler:
                 "toc_entries":    entries_for_template,
             })
 
-        return self._env.get_template("base.html").render(
+        html = self._env.get_template("base.html").render(
             deck=deck,
             rendered_slides=rendered_slides,
             css=css,
             main_js=main_js,
             plugins=deck.plugins,
             plugin_names=deck._plugin_names,
+            plugin_assets=plugin_assets,
+            plugin_opts=plugin_opts,
+            security=security_ctx,
         )
+        trusted = [a["text"] for a in plugin_assets if a.get("mode") == "inline"]
+        trusted.append(main_js)
+        self._assert_no_external(html, trusted)
+        return html

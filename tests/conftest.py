@@ -1,6 +1,6 @@
 import pytest
 
-from tessera import CellDefaults, Deck, Plugin, SlideDefaults
+from tessera import CellDefaults, Deck, Plugins, SlideDefaults
 
 
 @pytest.fixture
@@ -10,9 +10,9 @@ def deck():
         title="Test Deck",
         author="Tester",
         plugins=[
-            Plugin("plotly", "cdn"),
-            Plugin("highlight", "cdn"),
-            Plugin("mermaid", "cdn"),
+            Plugins.Plotly(source="cdn"),
+            Plugins.Highlight(source="cdn"),
+            Plugins.Mermaid(source="cdn"),
         ],
     )
 

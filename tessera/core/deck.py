@@ -7,24 +7,14 @@ Defines ``Deck``, ``Plugin``, ``SlideDefaults``, and ``CellDefaults``.
 from __future__ import annotations
 
 import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Hashable, Literal
 
 from tessera.cells import _UNSET
+from tessera.core.plugins import Plugin
+from tessera.core.security import Security
 from tessera.core.slide import Slide
-
-
-# ---------------------------------------------------------------------------
-# Plugin
-# ---------------------------------------------------------------------------
-
-@dataclass
-class Plugin:
-    """Declares an optional JS library and its loading mode."""
-
-    name:   Literal["mathjax", "plotly", "highlight", "mermaid"]
-    source: Literal["bundled", "cdn"] = "bundled"
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +90,17 @@ class Deck:
         custom_css (str | Path | None): Optional path to a custom CSS file to include.
         self_contained (bool): Whether to produce a self-contained HTML file with 
             embedded assets (default: True).
-        plugins (list[Plugin]): List of optional plugins to include (default: []).
+        plugins (list[Plugin]): Optional JS libraries to include, declared via the
+            ``Plugins`` container, e.g. ``[Plugins.Plotly(), Plugins.Mermaid()]``
+            (default: ``[]``). Nothing is mandatory — declare only what you use.
+        plugin_source (Literal['cdn', 'bundled']): Default loading mode for every
+            plugin that doesn't set its own ``source`` (default: ``'cdn'``).
+            ``'bundled'`` embeds the libraries for a report that works fully
+            offline. A ``Security(block_external=True)`` forces ``'bundled'``.
+        security (Security | None): Security / privacy hardening for the output
+            (CSP, SRI, no-referrer, Permissions-Policy, ...). ``None`` (default)
+            applies light, always-safe hardening; pass ``Security(...)`` to
+            customise — notably ``block_external=True`` for a provably offline file.
         slide_defaults (SlideDefaults): Global defaults for slides (default: SlideDefaults()).
         cell_defaults (CellDefaults): Global defaults for cells (default: CellDefaults()).
         autosave (str | None): Optional filename to autosave after each change.
@@ -151,7 +151,7 @@ class Deck:
             title="Q3 Report",
             author="J. Smith",
             theme="default",
-            plugins=[Plugin("mathjax"), Plugin("plotly")],
+            plugins=[Plugins.MathJax(), Plugins.Plotly()],
             slide_defaults=SlideDefaults(nrows=2, ncols=2),
             cell_defaults=CellDefaults(expand_button=True),
         )
@@ -171,6 +171,7 @@ class Deck:
         custom_css:     str | Path | None        = None,
         self_contained: bool                     = True,
         plugins:        list[Plugin]             = [],
+        plugin_source:  Literal['cdn', 'bundled'] = 'cdn',
         slide_defaults: SlideDefaults            = SlideDefaults(),   # noqa: B006
         cell_defaults:  CellDefaults             = CellDefaults(),    # noqa: B006
         autosave:       str | None               = None,
@@ -186,6 +187,7 @@ class Deck:
         sidebar_collapsible_sections: bool        = True,
         preview_height:    int | None             = None,
         contents_folder:   str | Path | None      = None,
+        security:          Security | None         = None,
     ) -> None:
         self.title          = title
         self.author         = author
@@ -195,6 +197,7 @@ class Deck:
         self.custom_css     = Path(custom_css) if isinstance(custom_css, str) else custom_css
         self.self_contained = self_contained
         self.plugins        = list(plugins)
+        self.plugin_source  = plugin_source
         self.slide_defaults = slide_defaults
         self.cell_defaults  = cell_defaults
         self.autosave       = autosave
@@ -210,6 +213,7 @@ class Deck:
         self.sidebar_collapsible_sections = sidebar_collapsible_sections
         self.preview_height  = preview_height
         self.contents_folder = contents_folder
+        self.security        = security or Security()
 
         self._slides:   list[Slide] = []
         self._slide_map: dict[Hashable, Slide] = {}
@@ -592,6 +596,7 @@ class Deck:
             custom_css=self.custom_css,
             self_contained=self.self_contained,
             plugins=self.plugins,
+            plugin_source=self.plugin_source,
             slide_defaults=self.slide_defaults,
             cell_defaults=self.cell_defaults,
             size=self.size,
@@ -601,6 +606,7 @@ class Deck:
             show_toolbar=False,
             preview_height=self.preview_height,
             contents_folder=self.contents_folder,
+            security=self.security,
         )
         clone._slides = list(slides)
         clone._slide_map = {s.slide_id: s for s in slides}
