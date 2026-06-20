@@ -1,6 +1,6 @@
 # Live demo
 
-The report below is an example of the capabilities of téssera.
+The report below is an example of the capabilities of tessera.
 
 For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom toolbar.
 

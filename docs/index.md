@@ -1,6 +1,6 @@
-# téssera
+# tessera
 
-**téssera** is a Python library for generating **self-contained, interactive
+**tessera** is a Python library for generating **self-contained, interactive
 HTML reports** from data — a single `.html` file with no runtime, ideal for
 batch-generated ML and analytics output, dashboards, and technical reports.
 
@@ -13,14 +13,13 @@ file you can email, commit, or serve.
 # Core only
 pip install tessera-report
 
-
-# Full support (Plotly, Pandas, Markdown)
+# Adds Markdown rendering + WebP image conversion
 pip install "tessera-report[full]"
 ```
 
 ## Live demo
 
-The report below is an example of the capabilities of téssera.
+The report below is an example of the capabilities of tessera.
 
 For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom toolbar.
 
@@ -32,11 +31,11 @@ For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom tool
 ## Example of use:
 
 ```python
-from tessera import Deck, Plugin, SlideDefaults
+from tessera import Deck, Plugins, SlideDefaults
 
 deck = Deck(
     title="Report",
-    plugins=[Plugin("plotly", "cdn"), Plugin("mermaid", "cdn")],
+    plugins=[Plugins.Plotly(), Plugins.Mermaid()],
 )
 
 deck.add_title("Report", subtitle="Production Engineering")
@@ -59,9 +58,12 @@ deck.write("report", open_browser=True)
 sections/quickstart
 sections/structure
 sections/cell-types
+sections/plugins
 sections/slide-ids
+sections/links
 sections/live-editing
 sections/layout-templates
+sections/security
 sections/demo
 ```
 

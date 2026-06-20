@@ -4,20 +4,20 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
 
-from tessera import Deck, Plugin
+from tessera import Deck, Plugins
 
 deck = Deck(
     title="My Report",
     author="André Dessimoni",
     plugins=[
-        Plugin('mathjax', 'cdn'),
-        Plugin('highlight'),
-        Plugin('plotly', 'cdn')
+        Plugins.MathJax(),
+        Plugins.Highlight(),
+        Plugins.Plotly(),
     ],
     theme='dark',
     size=(1280, 720),
     scale_up=True,
-    sidebar_collapsed=True,
+    sidebar_collapsed=False,
 )
 
 # -----------------------------------------------------------------------------

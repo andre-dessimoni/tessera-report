@@ -1,6 +1,6 @@
 # Deck structure
 
-Beyond content slides, téssera provides three structural slide types for
+Beyond content slides, tessera provides three structural slide types for
 organising long reports: **title**, **section**, and **TOC**.
 
 ## Title slide
@@ -24,8 +24,14 @@ deck.add_title(
 )
 ```
 
+
 The `subtitle` appears below the title in a smaller muted style. A decorative
 accent bar is drawn under the title block on the default theme.
+
+```{raw} html
+<iframe class="tessera-embed" src="../_static/deck/title-sections-example.html#title"
+        loading="lazy" allowfullscreen></iframe>
+```
 
 ---
 
@@ -46,6 +52,12 @@ deck.add_section("Model Training")
 deck.add_section("Feature store",  level=2)
 ```
 
+```{raw} html
+<iframe class="tessera-embed" src="../_static/deck/title-sections-example.html#section_lvl1a"
+        loading="lazy" allowfullscreen></iframe>
+```
+
+
 ### Section levels
 
 The `level` parameter controls how the section is displayed in the sidebar:
@@ -56,6 +68,15 @@ The `level` parameter controls how the section is displayed in the sidebar:
 | `2` | Indented, muted colour |
 | `3` | Further indented, dimmed |
 
+The same hierarchy is reflected in a section slide's inline TOC: deeper levels
+are indented and dimmed, and the current section is highlighted. Below, the
+level-2 **Networking** section is the current one:
+
+```{raw} html
+<iframe class="tessera-embed" src="../_static/deck/title-sections-example.html#section_lvl2aa"
+        loading="lazy" allowfullscreen></iframe>
+```
+
 ### Excluding a section from the TOC
 
 Pass `add_to_toc=False` to create a section divider that does not appear in
@@ -63,6 +84,14 @@ TOC slides or inline TOC lists — useful for appendices or internal breaks.
 
 ```python
 deck.add_section("Appendix", add_to_toc=False)
+```
+
+The demo deck's **Appendix** is added this way (and with `show_toc=False`), so it
+is a bare divider that never appears in any TOC:
+
+```{raw} html
+<iframe class="tessera-embed" src="../_static/deck/title-sections-example.html#section_lvl3c"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 ### Inline TOC on section slides
@@ -73,6 +102,14 @@ clean divider with only the title:
 
 ```python
 deck.add_section("Data Ingestion", show_toc=False)
+```
+
+With the default `show_toc=True`, the **Model Performance** section renders the
+inline TOC and highlights itself (contrast this with the bare Appendix above):
+
+```{raw} html
+<iframe class="tessera-embed" src="../_static/deck/title-sections-example.html#section_lvl1b"
+        loading="lazy" allowfullscreen></iframe>
 ```
 
 ---
@@ -96,6 +133,13 @@ deck.add_slide("Training results", ...)
 deck.write("report")                        # TOC now lists both sections
 ```
 
+The entries are clickable — selecting one navigates to that section:
+
+```{raw} html
+<iframe class="tessera-embed" src="../_static/deck/title-sections-example.html#toc"
+        loading="lazy" allowfullscreen></iframe>
+```
+
 ### Custom title
 
 ```python
@@ -116,14 +160,14 @@ deck.add_toc(auto=False)
 ## Putting it together
 
 ```python
-from tessera import Deck, Plugin
+from tessera import Deck, Plugins
 
 deck = Deck(
     title="Q3 Platform Report",
     author="A. Dessimoni",
     date="2025-06-01",
     version="3.0",
-    plugins=[Plugin("plotly", "cdn"), Plugin("mermaid", "cdn")],
+    plugins=[Plugins.Plotly(), Plugins.Mermaid()],
 )
 
 deck.add_title("Q3 Platform Report", subtitle="Platform Engineering")
@@ -164,7 +208,7 @@ For a better view, click the &#x26F6; `Fullscreen (F)` button on the bottom tool
   box-sizing: border-box;
 ">
   <iframe
-    src="../_static/title-sections-example.html"
+    src="../_static/deck/title-sections-example.html"
     style="
       display: block;
       width: 100%;

@@ -7,7 +7,7 @@ slide, or a single cell as the last expression in a cell renders an inline,
 sandboxed preview — no need to write a file or open a browser:
 
 ```python
-deck = Deck(title="Q3 Report", plugins=[Plugin("plotly", "cdn")])
+deck = Deck(title="Q3 Report", plugins=[Plugins.Plotly()])
 deck.add_title("Q3 Report")
 slide = deck.add_slide("KPIs", nrows=1, ncols=2)
 cell  = slide.add_metric(value=98.7, label="Efficiency")
@@ -29,9 +29,9 @@ its grid, and return it as the cell's last expression. No file is written:
 
 ```python
 import plotly.express as px
-from tessera import Deck, Plugin
+from tessera import Deck, Plugins
 
-deck  = Deck(title="scratch", plugins=[Plugin("plotly", "cdn")])
+deck  = Deck(title="scratch", plugins=[Plugins.Plotly()])
 slide = deck.add_slide("Run 42", nrows=1, ncols=3)
 
 slide.add_metric(value=0.94, label="Accuracy", delta=+0.02)

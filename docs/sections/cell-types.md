@@ -18,7 +18,7 @@ slide.add_text(
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#text"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#text"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -38,7 +38,7 @@ slide.add_metric(
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#metric"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#metric"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -63,7 +63,7 @@ slide.add_table(pd.read_csv("data.csv"))
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#table"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#table"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -84,7 +84,7 @@ slide.add_image(
 In `self_contained=True` mode, local images are embedded as base64.
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#image"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#image"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -103,7 +103,7 @@ slide.add_image_slider(
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#image-slider"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#image-slider"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -133,7 +133,7 @@ may be more straight forward to add items from code data structures, instead of 
 on string interpolation.
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#list"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#list"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -142,7 +142,7 @@ on string interpolation.
 ## CodeCell — `add_code()`
 
 Code block with syntax highlighting via Highlight.js.
-Requires `Plugin("highlight", "cdn")`.
+Requires `Plugins.Highlight()`.
 
 ```python
 slide.add_code(
@@ -153,7 +153,7 @@ slide.add_code(
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#code"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#code"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -162,7 +162,7 @@ slide.add_code(
 ## PlotlyCell — `add_plotly()`
 
 Interactive Plotly figure embedded as JSON.
-Requires `Plugin("plotly", "cdn")`.
+Requires `Plugins.Plotly()`.
 
 ```python
 import plotly.express as px
@@ -172,7 +172,7 @@ slide.add_plotly(fig, caption="Iris Dataset")
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#plotly"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#plotly"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -181,7 +181,7 @@ slide.add_plotly(fig, caption="Iris Dataset")
 ## MermaidCell — `add_mermaid()`
 
 Declarative diagram (flowchart, sequenceDiagram, gantt, etc.).
-Requires `Plugin("mermaid", "cdn")`.
+Requires `Plugins.Mermaid()`.
 
 ```python
 
@@ -232,7 +232,7 @@ gantt
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#mermaid"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#mermaid"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -291,7 +291,7 @@ slide.add_html("""
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#html"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#html"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -309,7 +309,7 @@ slide.add_iframe(
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#iframe"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#iframe"
         loading="lazy" allowfullscreen></iframe>
 ```
 
@@ -328,6 +328,6 @@ slide.add_empty()                                    # col 2, row 2 — empty sp
 ```
 
 ```{raw} html
-<iframe class="tessera-embed" src="../_static/slides/cell_types.html#empty"
+<iframe class="tessera-embed" src="../_static/deck/cell_types.html#empty"
         loading="lazy" allowfullscreen></iframe>
 ```

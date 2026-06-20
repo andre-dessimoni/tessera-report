@@ -13,13 +13,33 @@
 ## Configuration
 
 ```{eval-rst}
-.. autoclass:: tessera.Plugin
-   :members:
-
 .. autoclass:: tessera.SlideDefaults
    :members:
 
 .. autoclass:: tessera.CellDefaults
+   :members:
+```
+
+---
+
+## Plugins
+
+```{eval-rst}
+.. autoclass:: tessera.Plugin
+   :members:
+
+.. autoclass:: tessera.Plotly
+.. autoclass:: tessera.Mermaid
+.. autoclass:: tessera.Highlight
+.. autoclass:: tessera.MathJax
+```
+
+---
+
+## Security
+
+```{eval-rst}
+.. autoclass:: tessera.Security
    :members:
 ```
 
@@ -62,4 +82,5 @@
 .. autoclass:: tessera.PluginNotDeclaredError
 .. autoclass:: tessera.ThemeNotFoundError
 .. autoclass:: tessera.InvalidDataError
+.. autoclass:: tessera.SecurityError
 ```

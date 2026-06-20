@@ -6,6 +6,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- **Bundled (offline) plugins.** Each plugin can load from a CDN (`source="cdn"`,
+  default) or be embedded in the report (`source="bundled"`) so it works with no
+  network at all. Flip the whole deck with `Deck(plugin_source="bundled")`. The
+  embedded libraries are vendored under `tessera/static/vendor/<library>/` — each
+  alongside its `LICENSE` (Plotly/Mermaid MIT, highlight.js BSD-3-Clause, MathJax
+  Apache-2.0) — and refreshed by the dev script `scripts/update_vendor.py` (which
+  fetches code + licenses, with a `--check` mode and an update log).
+- **Per-plugin classes via the `Plugins` container** — `Plugins.Plotly()`,
+  `Plugins.Mermaid(theme=...)`, `Plugins.Highlight(style=...)`,
+  `Plugins.MathJax(output=...)` — each with its own typed options, plus
+  `version=` / `url=` / `set_cdn()` to pin a version or point at a custom mirror.
+- **`Security(...)` hardening**, passed as `Deck(security=...)`. Light hardening is
+  on by default (`no-referrer`, `Permissions-Policy`, and Subresource-Integrity on
+  CDN libraries). `block_external=True` is a hard offline guarantee: it forces all
+  plugins to bundle, emits a strict Content-Security-Policy, and raises
+  `SecurityError` if the rendered report still references any external resource.
+  New docs: *Plugins* and *Security & offline use*.
 - `notebook_unique=True` on `add_slide`/`add_title`/`add_section`/`add_toc` and
   every cell `add_*`: re-running the *same* Jupyter cell replaces the items it
   created instead of duplicating them — no manual id needed. Keys off the Jupyter
@@ -26,6 +43,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- **Optional-dependency extras now cover only what tessera itself imports.**
+  `[full]` is `markdown-it-py` + `pillow`; the standalone `[plotly]` and
+  `[pandas]` extras were removed. You build `Figure`/`DataFrame` objects yourself,
+  so those libraries are already present when you call `add_plotly`/`add_table`/
+  `add_matplotlib` — they're now pulled only by `[dev]` for the test suite.
 - **`add_matplotlib` now defaults to `fmt="svg"`** (was `"png"`) — crisp, vector,
   infinitely zoomable. Use `fmt="webp"`/`to_webp=True` for dense plots where SVG
   gets large.
@@ -46,6 +68,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   fixed-size mode that role moved to `.stage`, so covers rendered top-left;
   the cover now centers itself via `margin:auto`, working in both modes.
 
+## [0.4.0] - 2026-06-17
+
 ### Changed (breaking)
 
 - **Renamed the PyPI distribution `tessera-slides` → `tessera-report`.** The
@@ -55,6 +79,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Renamed the main class `HTMLSlides` → `Deck`** (no alias; update
   `from tessera import HTMLSlides` to `from tessera import Deck`). The internal
   module `tessera.core.slides` moved to `tessera.core.deck`.
+- **Replaced the flat `Plugin(name, source)` with the `Plugins.*` classes.**
+  Update `Plugin("plotly", "cdn")` to `Plugins.Plotly(source="cdn")` (or just
+  `Plugins.Plotly()` — the default source is now `"cdn"`). `Plugin` remains as the
+  shared base type. Added `Deck(plugin_source=...)` to set the default for all
+  plugins at once.
 - Repositioned the library toward **self-contained, interactive HTML reports for
   batch-generated data/ML output** (was framed as "HTML slideshows").
 - Fixed `__version__` resolution, which previously looked up the wrong

@@ -28,6 +28,7 @@ _SLIDE_GENERATORS = [
     _HERE / "examples" / "layout"     / "layout.py",
     _HERE / "examples" / "cell_types" / "cell_types.py",
     _HERE / "examples" / "structure"  / "structure.py",
+    _HERE / "examples" / "links"      / "links.py",
 ]
 
 
@@ -72,7 +73,7 @@ if __name__ == "__main__":
 project   = "tessera"
 copyright = "2026, André Rezende Dessimoni Carvalho"
 author    = "André Rezende Dessimoni Carvalho"
-release   = "0.1.0"
+release   = "0.5.0"
 
 # ---------------------------------------------------------------------------
 # Extensions

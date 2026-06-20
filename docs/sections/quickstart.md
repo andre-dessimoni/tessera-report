@@ -6,10 +6,14 @@
 # Core only
 pip install tessera-report
 
-
-# Full support (Plotly, Pandas, Markdown)
+# Adds Markdown rendering + WebP image conversion
 pip install "tessera-report[full]"
 ```
+
+Charts and tables use libraries you already have — `add_plotly` needs `plotly`,
+`add_table(df)` / `add_matplotlib` need `pandas` / `matplotlib`. Since you create
+those objects yourself, install them as you normally would; tessera doesn't pin
+them.
 
 ## Basic structure
 
@@ -18,19 +22,19 @@ Every report follows the same pattern:
 ```python
 
 import plotly.express as px
-from tessera import Deck, Plugin
+from tessera import Deck, Plugins
 
 # 1. Create the deck
 deck = Deck(
     title="Q2 Report",
     author="A. Dessimoni",
-    plugins=[Plugin("plotly", "cdn"), Plugin("mermaid", "cdn")],
+    plugins=[Plugins.Plotly(), Plugins.Mermaid()],
 )
 
 # 2. Add slides
 
 deck = Deck(title="Template Report", autosave='example', 
-                    autosave_level='cell', plugins=[Plugin('mermaid'), Plugin('plotly')])
+                    autosave_level='cell', plugins=[Plugins.Mermaid(), Plugins.Plotly()])
 
 # Trend chart + breakdown table
 slide = deck.add_slide("Trends", nrows=1, ncols=2)
@@ -121,14 +125,19 @@ See [Live editing](live-editing.md) for more.
 
 ## Plugins
 
-Some cell types require a plugin declared on `Deck`:
+Some cell types require a plugin, declared via the `Plugins` container and passed
+to `Deck(plugins=[...])`. Nothing is mandatory — declare only what you use.
 
 | Plugin | Cells |
 |---|---|
-| `Plugin("plotly", "cdn")` | `add_plotly()` |
-| `Plugin("highlight", "cdn")` | `add_code()` |
-| `Plugin("mermaid", "cdn")` | `add_mermaid()` |
-| `Plugin("mathjax", "cdn")` | LaTeX in `add_text()` |
+| `Plugins.Plotly()` | `add_plotly()` |
+| `Plugins.Highlight()` | `add_code()` |
+| `Plugins.Mermaid()` | `add_mermaid()` |
+| `Plugins.MathJax()` | LaTeX in `add_text()` |
+
+Each loads from a CDN by default; pass `source="bundled"` (or
+`Deck(plugin_source="bundled")`) to embed them for a fully offline file. See
+[Plugins](plugins.md) and [Security & offline use](security.md) for details.
 
 ## Common cell options
 

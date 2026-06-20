@@ -8,15 +8,15 @@ Run via `make.bat deck` (or any docs build). See docs/conf.py.
 
 import plotly.express as px
 
-from tessera import Deck, Plugin
+from tessera import Deck, Plugins
 
 deck = Deck(
     title="Cell types",
     plugins=[
-        Plugin("mathjax", "cdn"),
-        Plugin("highlight", "cdn"),
-        Plugin("plotly", "cdn"),
-        Plugin("mermaid", "cdn"),
+        Plugins.MathJax(),
+        Plugins.Highlight(),
+        Plugins.Plotly(),
+        Plugins.Mermaid(),
     ],
     size=(1280, 720),
     scale_up=True,

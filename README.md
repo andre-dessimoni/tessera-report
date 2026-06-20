@@ -1,7 +1,9 @@
-# téssera
+# tessera
+
+[![CI](https://github.com/andre-dessimoni/tessera-report/actions/workflows/ci.yml/badge.svg)](https://github.com/andre-dessimoni/tessera-report/actions/workflows/ci.yml)
 
 Build **self-contained, interactive HTML reports** from Python — one file you
-can email, commit, or serve, with no runtime and no dependencies on the viewer's
+can commit, or serve, with no runtime and no dependencies on the viewer's
 machine. Designed for **batch-generated data and ML output**: loop over your
 experiments, runs, or segments and emit a report per iteration.
 
@@ -16,28 +18,23 @@ https://tessera-report.readthedocs.io/
 
 ```bash
 pip install tessera-report
-
-# With Plotly, Pandas and Markdown support:
-pip install "tessera-report[full]"
 ```
 
 
 ## Quick start
 
 ```python
-from tessera import Deck, Plugin, SlideDefaults, CellDefaults
+from tessera import Deck
 
 deck = Deck(
     title="My Report",
-    slide_defaults=SlideDefaults(nrows=2, ncols=2),
-    cell_defaults=CellDefaults(expand_button=True),
-    plugins=[Plugin("plotly", "cdn"), Plugin("mermaid", "cdn")],
 )
 
 deck.add_title("My Report", subtitle="Subtitle here")
 deck.add_section("1 — Introduction")
 
-slide = deck.add_slide("Results")
+slide = deck.add_slide("Results", ncols=2)
+
 slide.add_metric(value=98.7, label="Efficiency (%)", delta=+2.3)
 slide.add_text("Text with **markdown** and LaTeX: $E = mc^2$")
 
@@ -49,12 +46,19 @@ deck.write("report", open_browser=True)
 The core use case — one report per run, generated in a loop:
 
 ```python
+deck = Deck(title=f"Experiment Results", author="Company name", date="Jun 20th, 2026")
+
 for run in experiment_runs:
-    deck = Deck(title=f"Run {run.id}")
+    
+    deck.add_section(title=f"Run #{run.id}")    
+    
     slide = deck.add_slide("Metrics", nrows=1, ncols=3)
+    
     slide.add_metric(value=run.accuracy, label="Accuracy", delta=run.delta)
     slide.add_plotly(run.loss_curve)
-    deck.write(f"reports/run-{run.id}")
+    slide.add_table(run.results_table, caption="Results")
+
+deck.write("report")
 ```
 
 
