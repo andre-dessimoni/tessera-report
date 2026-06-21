@@ -68,5 +68,32 @@
         "url": "https://cdn.jsdelivr.net/npm/mathjax@{version}/LICENSE"
       }
     ]
+  },
+  "tabulator": {
+    "version": "6.3.1",
+    "js": "tabulator.min.js",
+    "cdn_js": "https://cdn.jsdelivr.net/npm/tabulator-tables@{version}/dist/js/tabulator.min.js",
+    "sri_js": "sha384-SKSq3cuuVWdfrjtLz9wNlqE0bMc903yMS5zGnFtwvfddplgxa1hywtiLyw1CbSHO",
+    "default_theme": "dark",
+    "css_file": "{theme}.min.css",
+    "cdn_css": "https://cdn.jsdelivr.net/npm/tabulator-tables@{version}/dist/css/{theme}.min.css",
+    "vendored_themes": [
+      "tabulator",
+      "tabulator_midnight"
+    ],
+    "theme_map": {
+      "light": "tabulator",
+      "dark": "tabulator_midnight"
+    },
+    "sri_css": {
+      "tabulator": "sha384-p6hY5g6BjbrEVoCLwj4gZMkotMaHdQrPkd4S0vRpErDxL9/kvjyaUIq/S9RAPQfL",
+      "tabulator_midnight": "sha384-vBqRsRIPXb03PYCog2z5jjcEBrrvg3yilshFbdVOmFtVX27t9rYeO7lXit0xIcou"
+    },
+    "licenses": [
+      {
+        "file": "LICENSE",
+        "url": "https://cdn.jsdelivr.net/npm/tabulator-tables@{version}/LICENSE"
+      }
+    ]
   }
 }

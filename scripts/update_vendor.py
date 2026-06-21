@@ -85,6 +85,14 @@ def _code_jobs(manifest: dict) -> list[tuple[str, Path, list[str]]]:
         fname = mj["js"].format(output=output)
         jobs.append((url, VENDOR_DIR / "mathjax" / fname, ["mathjax", "sri", output]))
 
+    t = manifest["tabulator"]
+    jobs.append((t["cdn_js"].format(version=t["version"]),
+                 VENDOR_DIR / "tabulator" / t["js"], ["tabulator", "sri_js"]))
+    for theme in t["vendored_themes"]:
+        url = t["cdn_css"].format(version=t["version"], theme=theme)
+        fname = t["css_file"].format(theme=theme)
+        jobs.append((url, VENDOR_DIR / "tabulator" / fname, ["tabulator", "sri_css", theme]))
+
     return jobs
 
 
