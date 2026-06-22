@@ -63,6 +63,8 @@ class CellDefaults:
             ``"center"``, or ``"right"`` (default ``"left"``).
         valign: Vertical alignment of cell content — ``"top"``,
             ``"middle"``, or ``"bottom"`` (default ``"top"``).
+        fontscale: Multiplier applied to the cell's text size (default
+            ``1.0``). Composes on top of the deck-wide ``fontsize_scale``.
     """
 
     overflow:      bool                                    = True
@@ -71,6 +73,7 @@ class CellDefaults:
     transparent:   bool                                    = False
     halign:        Literal["left", "center", "right"]      = "left"
     valign:        Literal["top", "middle", "bottom"]      = "top"
+    fontscale:     float                                   = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -86,8 +89,12 @@ class Deck:
         author (str):   The presentation author (optional).
         date (str):     The presentation date (optional, defaults to today).
         version (str):  The presentation version (optional).
-        theme (str):    
+        theme (str):
         custom_css (str | Path | None): Optional path to a custom CSS file to include.
+        fontsize_scale (float): Multiplier applied to every font in the
+            presentation — slide content and the navigation chrome (sidebar,
+            toolbar, TOC, lightbox) alike (default ``1.0``). Spacing and layout
+            are unaffected. Per-cell ``fontscale`` composes on top of this.
         self_contained (bool): Whether to produce a self-contained HTML file with 
             embedded assets (default: True).
         plugins (list[Plugin]): Optional JS libraries to include, declared via the
@@ -169,6 +176,7 @@ class Deck:
         version:        str                      = "",
         theme:          str                      = "default",
         custom_css:     str | Path | None        = None,
+        fontsize_scale: float                    = 1.0,
         self_contained: bool                     = True,
         plugins:        list[Plugin]             = [],
         plugin_source:  Literal['cdn', 'bundled'] = 'cdn',
@@ -195,6 +203,7 @@ class Deck:
         self.version        = version
         self.theme          = theme
         self.custom_css     = Path(custom_css) if isinstance(custom_css, str) else custom_css
+        self.fontsize_scale = fontsize_scale
         self.self_contained = self_contained
         self.plugins        = list(plugins)
         self.plugin_source  = plugin_source

@@ -13,7 +13,7 @@
   border-radius: var(--radius);
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--cell-font-scale, 1));
 }
 
 .cell-tabulator .tabulator .tabulator-header,

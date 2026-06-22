@@ -13,7 +13,7 @@
   height: 100%;
   overflow: auto;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--cell-font-scale, 1));
   line-height: 1.55;
   border-radius: var(--radius);
 }

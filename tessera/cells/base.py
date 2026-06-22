@@ -76,6 +76,7 @@ class CellParams:
     transparent:   bool  = False
     halign:        Literal["left", "center", "right"] = "left"
     valign:        Literal["top", "middle", "bottom"] = "top"
+    fontscale:     float = 1.0
 
 # ---------------------------------------------------------------------------
 # Cell — abstract base class
@@ -196,6 +197,7 @@ def cell_method(fn: "Callable[_P, _R]") -> "Callable[_P, _R]":
         transparent   = kwargs.pop("transparent",   _UNSET)
         halign        = kwargs.pop("halign",        _UNSET)
         valign        = kwargs.pop("valign",        _UNSET)
+        fontscale     = kwargs.pop("fontscale",     _UNSET)
         cell_id         = kwargs.pop("cell_id",         _UNSET)
         notebook_unique = kwargs.pop("notebook_unique", False)
 
@@ -225,6 +227,8 @@ def cell_method(fn: "Callable[_P, _R]") -> "Callable[_P, _R]":
             halign = cd.halign
         if valign is _UNSET:
             valign = cd.valign
+        if fontscale is _UNSET:
+            fontscale = cd.fontscale
 
         # --- 3. Resolve position ---
         # If cell_id already exists, we treat this as an update to an existing cell,
@@ -250,6 +254,7 @@ def cell_method(fn: "Callable[_P, _R]") -> "Callable[_P, _R]":
             transparent=transparent,
             halign=halign,
             valign=valign,
+            fontscale=fontscale,
         )
         cell = cast("Callable[..., Cell]", fn)(slide, *args, **kwargs)
 

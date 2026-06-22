@@ -9,7 +9,7 @@
 .hs-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--cell-font-scale, 1));
 }
 
 .hs-table thead th {

@@ -208,6 +208,7 @@ class Slide:
         transparent:   bool        = _UNSET,  # type: ignore[assignment]
         halign:        str         = _UNSET,  # type: ignore[assignment]
         valign:        str         = _UNSET,  # type: ignore[assignment]
+        fontscale:     float       = _UNSET,  # type: ignore[assignment]
         _params: Any               = None,    # injected by the decorator
     ) -> TextCell:
         """Add a text cell to the slide.
@@ -235,6 +236,8 @@ class Slide:
                 or ``"right"``.
             valign: Vertical alignment — ``"top"``, ``"middle"``,
                 or ``"bottom"``.
+            fontscale: Multiplier for this cell's text size (default ``1.0``).
+                Composes on top of the deck-wide ``fontsize_scale``.
 
         Returns:
             TextCell: The newly created and registered text cell.
@@ -607,6 +610,7 @@ class Slide:
         transparent:   bool        = _UNSET,  # type: ignore[assignment]
         halign:        str         = _UNSET,  # type: ignore[assignment]
         valign:        str         = _UNSET,  # type: ignore[assignment]
+        fontscale:     float       = _UNSET,  # type: ignore[assignment]
         _params: Any               = None,
     ) -> MatplotlibCell:
         """Add a matplotlib figure to the slide.
@@ -642,6 +646,8 @@ class Slide:
                 or ``"right"``.
             valign: Vertical alignment — ``"top"``, ``"middle"``,
                 or ``"bottom"``.
+            fontscale: Multiplier for this cell's text size (default ``1.0``).
+                Composes on top of the deck-wide ``fontsize_scale``.
 
         Returns:
             MatplotlibCell: The newly created and registered figure cell.
@@ -911,6 +917,7 @@ class Slide:
         transparent: bool   = _UNSET,  # type: ignore[assignment]
         halign:      str    = _UNSET,  # type: ignore[assignment]
         valign:      str    = _UNSET,  # type: ignore[assignment]
+        fontscale:   float  = _UNSET,  # type: ignore[assignment]
         _params: Any        = None,
     ) -> EmptyCell:
         """Add an empty placeholder cell to reserve space on the grid.
@@ -929,6 +936,8 @@ class Slide:
                 or ``"right"``.
             valign: Vertical alignment — ``"top"``, ``"middle"``,
                 or ``"bottom"``.
+            fontscale: Multiplier for this cell's text size (default ``1.0``).
+                Composes on top of the deck-wide ``fontsize_scale``.
 
         Returns:
             EmptyCell: The newly created and registered empty cell.

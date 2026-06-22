@@ -184,7 +184,7 @@
 .slider-img:hover { opacity: 0.88; }
 
 .slider-caption {
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--cell-font-scale, 1));
   color: var(--text-muted, #8b949e);
   margin: 4px 0 0;
   text-align: center;

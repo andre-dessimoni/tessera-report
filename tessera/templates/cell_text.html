@@ -4,6 +4,7 @@
   style="
     grid-column: {{ cell.params.col }} / span {{ cell.params.colspan }};
     grid-row:    {{ cell.params.row }} / span {{ cell.params.rowspan }};
+    {% if cell.params.fontscale != 1.0 %}--cell-font-scale: {{ cell.params.fontscale }};{% endif %}
   "
 >
   {% if cell.params.copy_button or cell.params.expand_button %}

@@ -21,6 +21,11 @@
   --font-sans: "Segoe UI", system-ui, sans-serif;
   --font-mono: "Fira Code", "Cascadia Code", monospace;
   --radius: 6px;
+  /* Deck-wide font scaling: all font-sizes are rem (spacing/layout is px),
+     so multiplying the root font-size scales every font and nothing else.
+     Overridden on <html> by Deck(fontsize_scale=...). */
+  --deck-font-scale: 1;
+  font-size: calc(100% * var(--deck-font-scale));
 }
 
 html, body {

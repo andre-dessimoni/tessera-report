@@ -6,6 +6,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- **Font scaling.** `Deck(fontsize_scale=…)` scales every font in the
+  presentation — slide content and navigation chrome alike — by one factor,
+  leaving spacing/layout untouched. Per-cell `slide.add_*(…, fontscale=…)` (and
+  `CellDefaults(fontscale=…)`) scales a single cell's text and composes on top of
+  the deck factor.
 - **Interactive tables — `slide.add_tabulator()`** (new `Plugins.Tabulator()`),
   backed by the bundled [Tabulator](https://tabulator.info) library (MIT). Sort,
   filter, paginate, group, edit inline, and download (CSV/JSON). Takes the same

@@ -153,6 +153,9 @@ All `add_*` methods accept:
 | `expand_button` | `bool` | Button to expand cell to full screen |
 | `copy_button` | `bool` | Button to copy cell content |
 | `transparent` | `bool` | Hide border and background |
+| `halign` | `"left"`/`"center"`/`"right"` | Horizontal alignment of cell content |
+| `valign` | `"top"`/`"middle"`/`"bottom"` | Vertical alignment of cell content |
+| `fontscale` | `float` | Multiplier for this cell's text size (composes on top of the deck's `fontsize_scale`) |
 
 ## Global defaults
 
@@ -166,8 +169,26 @@ deck = Deck(
         expand_button=True,
         overflow=True,
         transparent=False,
+        halign="center",
+        valign="middle",
+        fontscale=1.0,
     ),
 )
+```
+
+## Font scaling
+
+Scale text without editing each cell or writing custom CSS:
+
+- `Deck(fontsize_scale=…)` multiplies **every** font in the presentation —
+  slide content *and* the navigation chrome (sidebar, toolbar, TOC, lightbox).
+  Spacing and layout are unaffected.
+- `fontscale` (per cell, or as a `CellDefaults` default) scales a single cell's
+  text and **composes on top of** `fontsize_scale`.
+
+```python
+deck = Deck(title="Report", fontsize_scale=1.2)   # everything 20% larger
+slide.add_text("Headline", fontscale=1.5)         # this cell: 1.2 × 1.5
 ```
 
 ## Fixed-size slides
