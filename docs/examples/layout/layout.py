@@ -7,7 +7,14 @@ Run via `make.bat deck` (or any docs build). See docs/conf.py.
 
 from tessera import CellDefaults, Deck, SlideDefaults
 
+# --- Standardized docs settings (docs/script-settings.yaml) -----------------
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+from _docs_settings import FONTSCALE
+
 deck = Deck(
+    fontsize_scale=FONTSCALE,
     title="Layout",
     size=(1280, 720),
     scale_up=True,

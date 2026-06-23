@@ -1,0 +1,8 @@
+# Shared settings for the docs example generator scripts (docs/examples/*/*.py).
+#
+# Every generator script reads this file (via docs/_docs_settings.py) and applies
+# the values to its Deck, so all embedded previews are standardized. Change a value
+# here and rebuild the docs (`make.bat deck`) to update every generated deck.
+
+# Font scale applied to every generated docs deck — maps to Deck(fontsize_scale=...).
+fontscale: 1.3
