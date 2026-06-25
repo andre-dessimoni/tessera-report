@@ -34,8 +34,31 @@
     initLightbox();
     initSidebar();
     initSidebarSections();
+    initToolbar();
     initStage();
     applyDeckZoom();
+  }
+
+  // -- Responsive toolbar ---------------------------------
+  // The toolbar wraps onto extra rows on narrow viewports (see layout.css).
+  // Mirror its real height into --toolbar-height so #main / #sidebar reserve
+  // the right amount of space instead of being overlapped by the wrapped rows.
+  function initToolbar() {
+    var toolbar = document.getElementById("toolbar");
+    if (!toolbar) return;
+    var sync = function () {
+      document.documentElement.style.setProperty(
+        "--toolbar-height", toolbar.offsetHeight + "px");
+    };
+    sync();
+    // The toolbar's height only changes when its content reflows (wrap), which a
+    // ResizeObserver on the element captures directly; window resize is covered
+    // because it changes the toolbar's available width.
+    if ("ResizeObserver" in window) {
+      new ResizeObserver(sync).observe(toolbar);
+    } else {
+      window.addEventListener("resize", sync);
+    }
   }
 
   // -- Fixed-size stage (scale-to-fit) --------------------
@@ -540,6 +563,18 @@
     });
   }
 
+  // Flags the deck area to hide its scrollbars (see layout.css) for the duration
+  // of the sidebar width transition, so they don't flicker mid-animation.
+  var _sbAnimTimer = null;
+  function markSidebarAnimating() {
+    document.body.classList.add("sb-animating");
+    if (_sbAnimTimer) clearTimeout(_sbAnimTimer);
+    _sbAnimTimer = setTimeout(function () {
+      document.body.classList.remove("sb-animating");
+      _sbAnimTimer = null;
+    }, 240);   // slightly longer than the 0.2s width/left transition
+  }
+
   function toggleSidebar() {
     var collapsed = document.body.classList.toggle("sb-collapsed");
     if (collapsed) {
@@ -550,6 +585,7 @@
     } else {
       document.documentElement.style.setProperty("--sidebar-width", _savedSidebarWidth);
     }
+    markSidebarAnimating();
     localStorage.setItem("tessera-sb-collapsed", collapsed ? "1" : "0");
   }
 

@@ -10,6 +10,10 @@
 
 :root {
   --sidebar-width: 220px;
+  /* Height of a single toolbar row. --toolbar-height is the space #main /
+     #sidebar reserve for the toolbar; it starts at one row and is grown by JS
+     when the toolbar wraps onto additional rows on narrow screens. */
+  --toolbar-row-height: 44px;
   --toolbar-height: 44px;
   --color-bg: #1a1a2e;
   --color-surface: #16213e;
@@ -89,6 +93,13 @@ body.sb-no-transition #sidebar-resize-handle {
   border-bottom: 1px solid var(--color-border);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* On short viewports vertical space is scarce (made tighter by a wrapped,
+   multi-row toolbar), so the slide list gets squeezed. Drop the title to give
+   the list ~45px more room; the deck title remains in the browser tab. */
+@media (max-height: 480px) {
+  #sidebar-header { display: none; }
 }
 
 /* ---- Sidebar search box ---- */
@@ -312,6 +323,14 @@ body.sb-no-transition #sidebar-resize-handle {
   transition: left 0.2s ease;
 }
 
+/* While the sidebar width animates (toggle) or is dragged, the deck area reflows
+   and would briefly show scrollbars before settling. Suppress them for the
+   duration so they don't flicker; overflow: auto is restored once it settles. */
+body.sb-animating #main,
+body.sb-no-transition #main {
+  overflow: hidden;
+}
+
 /* The .stage wrapper is transparent in fluid mode (children flow into .slide as
    before); in fixed-size mode it becomes the native-size, transform-scaled stage
    inside a layout-sized .slide (see the .fixed-size rules below). */
@@ -325,8 +344,8 @@ body:not(.fixed-size) .slide {
 }
 
 /* ---- Hidden sidebar / toolbar (single-slide / embeddable) ---- */
-.no-sidebar #main,
-.no-sidebar #toolbar {
+/* The toolbar is already full-width (left: 0); only #main shifts with the sidebar. */
+.no-sidebar #main {
   left: 0;
 }
 
@@ -394,19 +413,26 @@ body.sb-collapsed {
 .fixed-size #main.panning .stage { cursor: grabbing; }
 
 /* ---- Toolbar ---- */
+/* The toolbar wraps onto extra rows on narrow viewports so every control stays
+   visible instead of overflowing. Its height is content-driven (min one row);
+   JS mirrors the real height back into --toolbar-height so #main / #sidebar
+   reserve the right amount of space when it grows to two or more rows. */
 #toolbar {
   position: fixed;
   bottom: 0;
-  left: var(--sidebar-width);
+  /* Spans the full window width (the sidebar sits above it) so it is never
+     squeezed by the sidebar into a tall vertical stack on narrow screens. */
+  left: 0;
   right: 0;
-  height: var(--toolbar-height);
-  transition: left 0.2s ease;
+  min-height: var(--toolbar-row-height);
+  padding: 4px 8px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 6px 12px;
   z-index: 100;
   container-type: inline-size;   /* enables the width query for the credit */
 }
