@@ -44,6 +44,27 @@ def _static_dir() -> Path:
     return Path(str(_res_files("tessera.static")))
 
 
+#: Deck JS modules, concatenated in this order into the inlined <script>.
+#: ``state`` must come first (creates the Tessera namespace) and ``boot`` last
+#: (runs init once every module has registered). See tessera/static/js/README.md.
+MAIN_JS_MODULES = [
+    "state", "toolbar", "stage", "zoom", "navigation", "keyboard", "view",
+    "lightbox", "slider", "sidebar", "copy", "charts", "touch", "boot",
+]
+
+
+def _read_main_js() -> str:
+    """Concatenate the deck JS modules (tessera/static/js) into one script."""
+    js_dir = _static_dir() / "js"
+    parts: list[str] = []
+    for name in MAIN_JS_MODULES:
+        path = js_dir / f"{name}.js"
+        if path.exists():
+            parts.append(f"/* --- js/{name}.js --- */")
+            parts.append(path.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
+
 class Assembler:
     def __init__(self, deck: "Deck") -> None:
         self.deck = deck
@@ -309,9 +330,8 @@ class Assembler:
         # CSS — theme merge
         css = ThemeResolver().resolve(deck.theme, deck.custom_css)
 
-        # Main JS
-        js_path = _static_dir() / "main.js"
-        main_js = js_path.read_text(encoding="utf-8") if js_path.exists() else ""
+        # Main JS — concatenated from the per-feature modules in tessera/static/js
+        main_js = _read_main_js()
 
         # Resolve media srcs (and optionally write assets to the contents folder)
         self._finalize_media()

@@ -59,6 +59,7 @@ include = ["tessera*"]
     "templates/*.html",
     "themes/**/*.css",
     "static/*.js",
+    "static/js/*.js",
     "static/vendor/**/*",
     "py.typed",
 ]
