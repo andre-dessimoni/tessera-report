@@ -118,9 +118,15 @@ pygments_style = "default"
 
 html_theme = "furo"
 html_title = "Montin"
-html_logo  = "_static/montin-logo.png"
+# Per-mode logos (Furo). Don't also set `html_logo` — it conflicts with these.
+# The light SVG uses dark Ink text; produce the dark variant by recolouring the
+# "Montin" / "SEE THE WHOLE" text fills to a light tone (e.g. Sand #E9ECEF) so
+# the wordmark stays legible on the dark background. Filenames are relative to
+# html_static_path (no `_static/` prefix). Tune the displayed size in embed.css.
 html_theme_options = {
-    "sidebar_hide_name":    False,
+    "light_logo":           "montin-logo-vertical.svg",
+    "dark_logo":            "montin-logo-vertical-dark.svg",
+    "sidebar_hide_name":    True,   # the SVG already contains the "Montin" wordmark
     "navigation_with_keys": True,
     "source_repository":    "https://github.com/andre-dessimoni/montin/",
     "source_branch":        "main",

@@ -7,7 +7,7 @@
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), usb=(), payment=(), interest-cohort=()">
   <meta name="author"  content="A. Dessimoni">
   <meta name="version" content="">
-  <meta name="date"    content="2026-06-22">
+  <meta name="date"    content="2026-06-28">
   <title>Q2 Report</title>
   <style>
 /* --- default/image.css --- */
@@ -574,6 +574,10 @@ body.sb-no-transition #sidebar-resize-handle {
   bottom: var(--toolbar-height);
   overflow: auto;   /* scrollbars appear when the deck is zoomed in (fluid mode) */
   transition: left 0.2s ease;
+  /* Let JS own pinch-zoom and horizontal swipe (see initTouchGestures): the
+     browser keeps native two-axis panning for zoomed-in slides, but its own
+     pinch/double-tap zoom is disabled so our handler can preventDefault. */
+  touch-action: pan-x pan-y;
 }
 
 /* While the sidebar width animates (toggle) or is dragged, the deck area reflows
@@ -713,7 +717,7 @@ body.sb-collapsed {
   color: var(--color-text-muted);
 }
 
-/* "Made with tessera" credit, pinned to the right of the toolbar. Absolutely
+/* "Made with montin" credit, pinned to the right of the toolbar. Absolutely
    positioned (relative to the fixed #toolbar) so it is out of the flex flow and
    the navigation controls keep their centred layout. */
 #toolbar-credit {
@@ -844,21 +848,70 @@ body.sb-collapsed {
 }
 
 /* ---- Print ---- */
+/* Goal: one slide per page, no sidebar/toolbar. The on-screen layout pins
+   everything to a single fixed viewport (html/body overflow:hidden, #main
+   position:fixed), so printing needs to undo that and let the deck flow down
+   the page — otherwise only the first slide (or a blank page) is printed. */
 @media print {
-  #sidebar, #toolbar, #overview, #modal, .cell-actions { display: none !important; }
+  /* Landscape pages (decks are 16:9). Tweak the margin to taste. */
+  @page { size: landscape; margin: 0.5cm; }
+
+  /* Release the single-viewport clamp and keep the deck's own (dark) colours —
+     browsers drop backgrounds in print unless color-adjust is exact. */
+  html, body {
+    height: auto;
+    overflow: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* No chrome / overlays in the printout. */
+  #sidebar, #toolbar, #sidebar-resize-handle,
+  #overview, #modal, .cell-actions { display: none !important; }
+
+  /* Let #main grow with its content instead of being a fixed viewport. */
   #main {
     position: static;
-    left: 0;
+    overflow: visible;
+    height: auto;
+    width: 100%;
   }
+
+  /* Every slide is shown, fills exactly one page, and ignores the on-screen
+     deck zoom. overflow:hidden clamps each to 100vh so it never spills onto a
+     second page; break-after starts the next slide on a fresh page. */
   .slide {
     display: flex !important;
-    page-break-after: always;
+    width: 100%;
     height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
+    zoom: 1 !important;
+    break-after: page;
+    break-inside: avoid;
   }
-  .slide-notes {
-    display: block !important;
-  }
+  .slide:last-child { break-after: auto; }   /* no trailing blank page */
+
+  .slide-notes { display: block !important; }
+
+  /* Fixed-size decks scale the stage with a screen-fit transform (JS-driven);
+     that factor is meaningless on paper, so flow the stage to the page like a
+     fluid deck and let each slide fill its own page. */
+  .fixed-size .slide { width: 100%; height: 100vh; }
+  .fixed-size .stage { width: 100%; height: 100%; transform: none; }
+
+  /* Interactive widgets don't print well, so swap each for the static fallback
+     generated on beforeprint (see charts.js initChartPrinting): a plain table
+     from the row data, and a scalable SVG snapshot of the chart (legend incl.). */
+  .montin-tabulator { display: none !important; }
+  .hs-print-table    { display: table !important; width: 100%; }
+  .plotly-container  { display: none !important; }
+  .plotly-print      { display: block !important; width: 100%; height: 100%; overflow: visible; }
+  .plotly-print svg  { width: 100%; height: 100%; }
 }
+
+/* The print-only fallbacks (built on beforeprint) are hidden on screen. */
+.hs-print-table, .plotly-print { display: none; }
 
 /* --- default/slide.css --- */
 /* ============================================================
@@ -1111,7 +1164,7 @@ body.sb-collapsed {
 /* ============================================================
    tabulator.css
    Thin skin over the bundled Tabulator stock theme so interactive
-   tables track the active tessera theme. Scoped under .cell-tabulator
+   tables track the active montin theme. Scoped under .cell-tabulator
    (specificity 0,2,0) so it wins over Tabulator's own `.tabulator…`
    rules regardless of stylesheet order, and driven by --color-*
    variables so one file works for the dark, light, and custom themes.
@@ -1800,8 +1853,8 @@ cell-overflow  cell-halign-left cell-valign-top"
     <button id="btn-zoom-in" onclick="deckZoom(1)" title="Zoom in (+)">&plus;</button>
   </span>
   <button id="btn-fullscreen" onclick="toggleFullscreen()" title="Fullscreen (F)">&#x26F6;</button>
-  <a id="toolbar-credit" href="https://tessera-report.readthedocs.io/"
-     target="_blank" rel="noopener" title="Built with tessera">Made with <span>tessera</span></a>
+  <a id="toolbar-credit" href="https://montin.readthedocs.io/"
+     target="_blank" rel="noopener" title="Built with Montin">Made with <span>Montin</span></a>
 </footer>
 
 <!-- ===================== OVERVIEW ===================== -->
@@ -1846,48 +1899,43 @@ cell-overflow  cell-halign-left cell-valign-top"
 
 <!-- ===================== JS ===================== -->
 <script>
-﻿/* tessera — main.js
-   Navigation, fullscreen, overview, modal, lightbox (zoom/pan/thumbnails),
-   image slider, plotly / tabulator init.
-   No external dependencies (Plotly / Tabulator are initialised if present).
-*/
+/* --- js/state.js --- */
+/* montin — state.js
+   ----------------------------------------------------------------------------
+   Creates the shared `Montin` namespace (aliased `T`) and the single source of
+   truth for cross-module mutable state, `T.state`. MUST load first: every other
+   module assumes `window.Montin` and `T.state` already exist.
 
-(function () {
+   See README.md in this folder for the module architecture and the rules for
+   what belongs on `T` / `T.state` / `window`.
+
+   Registers: T.state (shared state object).
+   ------------------------------------------------------------------------- */
+(function (T) {
   "use strict";
 
-  // -- State -----------------------------------------------
-  const slides = Array.from(document.querySelectorAll(".slide"));
-  let current = 0;
-  var _savedSidebarWidth = "220px";
+  // Cross-module mutable state. Only values read or written by more than one
+  // module live here; per-feature state stays local to its own module.
+  T.state = {
+    slides:       Array.from(document.querySelectorAll(".slide")), // never reassigned
+    current:      0,      // index of the active slide (navigation, zoom, lightbox)
+    deckZoom:     1,      // deck-area zoom factor, 1 = 100% (zoom, stage, touch)
+    searchActive: false,  // sidebar filter active? (navigation, sidebar)
+  };
 
-  // Deck-area zoom (toolbar +/- controls). Scales only the slide content, not
-  // the sidebar/toolbar. 1 = 100%.
-  var _deckZoom = 1;
-  var ZOOM_MIN = 0.25, ZOOM_MAX = 4, ZOOM_STEP = 1.25;
+})(window.Montin = window.Montin || {});
 
-  // -- Initialisation -------------------------------------
-  function init() {
-    if (slides.length === 0) return;
+/* --- js/toolbar.js --- */
+/* montin — toolbar.js
+   ----------------------------------------------------------------------------
+   Keeps --toolbar-height in sync with the toolbar's real (possibly wrapped)
+   height so #main / #sidebar reserve the right amount of space.
 
-    // Deep link via hash (#slide-3)
-    const hash = window.location.hash.slice(1);
-    const fromHash = slides.findIndex((s) => s.id === hash);
-    goTo(fromHash >= 0 ? fromHash : 0, false);
+   T.state: none.   Calls: none.   Registers: T.initToolbar.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
 
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("hashchange", onHashChange);
-
-    initPlotlyCharts();
-    initSliders();
-    initLightbox();
-    initSidebar();
-    initSidebarSections();
-    initToolbar();
-    initStage();
-    applyDeckZoom();
-  }
-
-  // -- Responsive toolbar ---------------------------------
   // The toolbar wraps onto extra rows on narrow viewports (see layout.css).
   // Mirror its real height into --toolbar-height so #main / #sidebar reserve
   // the right amount of space instead of being overlapped by the wrapped rows.
@@ -1909,6 +1957,23 @@ cell-overflow  cell-halign-left cell-valign-top"
     }
   }
 
+  T.initToolbar = initToolbar;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/stage.js --- */
+/* montin — stage.js
+   ----------------------------------------------------------------------------
+   Fixed-size ("PDF-like") decks: scale the native-size .stage to fit #main and
+   add grab-to-pan when it overflows. No-op for fluid decks.
+
+   T.state: reads deckZoom, slides, current.
+   Calls: T.renderTabulatorsInSlide (redraw after re-fit).
+   Registers: T.fitStage, T.initStage.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
   // -- Fixed-size stage (scale-to-fit) --------------------
   function fitStage() {
     var body = document.body;
@@ -1927,7 +1992,7 @@ cell-overflow  cell-halign-left cell-valign-top"
     if (keepAspect) { sx = sy = Math.min(sx, sy); }
 
     // Deck-area zoom multiplies the fit (fixed-size stages scale via transform).
-    sx *= _deckZoom; sy *= _deckZoom;
+    sx *= T.state.deckZoom; sy *= T.state.deckZoom;
 
     body.style.setProperty("--stage-sx", sx);
     body.style.setProperty("--stage-sy", sy);
@@ -1970,7 +2035,10 @@ cell-overflow  cell-halign-left cell-valign-top"
     var main = document.getElementById("main");
     // Recompute the stage scale, then redraw the visible tables so Tabulator
     // re-measures against the new transform.
-    var onFit = function() { fitStage(); renderTabulatorsInSlide(slides[current]); };
+    var onFit = function() {
+      fitStage();
+      T.renderTabulatorsInSlide(T.state.slides[T.state.current]);
+    };
     // ResizeObserver on #main captures window resizes (it is pinned to the
     // window edges) and sidebar toggle/resize (which shifts its left edge).
     if (main && "ResizeObserver" in window) {
@@ -1981,54 +2049,108 @@ cell-overflow  cell-halign-left cell-valign-top"
     initStagePan();
   }
 
-  // -- Deck-area zoom (toolbar) ---------------------------
+  T.fitStage  = fitStage;
+  T.initStage = initStage;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/zoom.js --- */
+/* montin — zoom.js
+   ----------------------------------------------------------------------------
+   Deck-area zoom (toolbar +/- buttons, +/-/0 keys, and pinch). Scales only the
+   slide content via the --deck-zoom CSS var (fluid decks) or the stage transform
+   (fixed-size decks).
+
+   T.state: reads/writes deckZoom; reads slides, current.
+   Calls: T.fitStage, T.renderTabulatorsInSlide.
+   Registers: T.applyDeckZoom, T.deckZoom, T.deckZoomReset, T.setDeckZoomLive.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
+  // Module-local zoom bounds/step (only zoom.js needs them).
+  var ZOOM_MIN = 0.25, ZOOM_MAX = 4, ZOOM_STEP = 1.25;
+
+  // Full zoom apply: update the CSS var + label, re-fit a fixed-size stage, and
+  // re-render the visible tables (the expensive part — see setDeckZoomLive).
   function applyDeckZoom() {
-    document.body.style.setProperty("--deck-zoom", _deckZoom);
+    document.body.style.setProperty("--deck-zoom", T.state.deckZoom);
     var lvl = document.getElementById("zoom-level");
-    if (lvl) lvl.textContent = Math.round(_deckZoom * 100) + "%";
+    if (lvl) lvl.textContent = Math.round(T.state.deckZoom * 100) + "%";
     // Fixed-size stages scale through the transform fit; recompute it.
-    if (document.body.classList.contains("fixed-size")) fitStage();
-    renderTabulatorsInSlide(slides[current]);
+    if (document.body.classList.contains("fixed-size")) T.fitStage();
+    T.renderTabulatorsInSlide(T.state.slides[T.state.current]);
   }
 
   function deckZoom(dir) {
-    var z = dir > 0 ? _deckZoom * ZOOM_STEP : _deckZoom / ZOOM_STEP;
-    _deckZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+    var z = dir > 0 ? T.state.deckZoom * ZOOM_STEP : T.state.deckZoom / ZOOM_STEP;
+    T.state.deckZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
     applyDeckZoom();
   }
 
   function deckZoomReset() {
-    _deckZoom = 1;
+    T.state.deckZoom = 1;
     applyDeckZoom();
   }
 
-  // -- Navigation -----------------------------------------
+  // Lightweight zoom update for live pinch frames. Mirrors applyDeckZoom but
+  // skips the expensive Tabulator re-render (run once when the pinch ends).
+  function setDeckZoomLive(z) {
+    T.state.deckZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+    document.body.style.setProperty("--deck-zoom", T.state.deckZoom);
+    var lvl = document.getElementById("zoom-level");
+    if (lvl) lvl.textContent = Math.round(T.state.deckZoom * 100) + "%";
+    if (document.body.classList.contains("fixed-size")) T.fitStage();
+  }
+
+  T.applyDeckZoom   = applyDeckZoom;
+  T.deckZoom        = deckZoom;
+  T.deckZoomReset   = deckZoomReset;
+  T.setDeckZoomLive = setDeckZoomLive;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/navigation.js --- */
+/* montin — navigation.js
+   ----------------------------------------------------------------------------
+   Moving between slides: activate a slide + its sidebar item, sync the counter
+   and URL hash, and trigger lazy chart/table rendering for the slide shown.
+
+   T.state: reads/writes current; reads slides, searchActive.
+   Calls: T.resizePlotlyInSlide, T.renderMermaidInSlide,
+          T.renderTabulatorsInSlide, T.revealActiveSidebarItem.
+   Registers: T.goTo, T.navigate, T.goToSlide, T.goToIndex, T.onHashChange.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
   function goTo(index, pushHash) {
+    var slides = T.state.slides;
     if (pushHash === undefined) pushHash = true;
     if (index < 0 || index >= slides.length) return;
 
-    slides[current].classList.remove("active");
+    slides[T.state.current].classList.remove("active");
     var sidebarItems = document.querySelectorAll(".sidebar-item");
-    if (sidebarItems[current]) sidebarItems[current].classList.remove("active");
+    if (sidebarItems[T.state.current]) sidebarItems[T.state.current].classList.remove("active");
 
-    current = index;
-    slides[current].classList.add("active");
-    if (sidebarItems[current]) sidebarItems[current].classList.add("active");
+    T.state.current = index;
+    slides[T.state.current].classList.add("active");
+    if (sidebarItems[T.state.current]) sidebarItems[T.state.current].classList.add("active");
 
     var input = document.getElementById("slide-input");
-    if (input) input.value = current + 1;
+    if (input) input.value = T.state.current + 1;
 
-    var sidebarItem = sidebarItems[current];
+    var sidebarItem = sidebarItems[T.state.current];
     if (sidebarItem) sidebarItem.scrollIntoView({ block: "nearest" });
 
     if (pushHash) {
-      history.replaceState(null, "", "#" + slides[current].id);
+      history.replaceState(null, "", "#" + slides[T.state.current].id);
     }
 
-    resizePlotlyInSlide(slides[current]);
-    renderMermaidInSlide(slides[current]);
-    renderTabulatorsInSlide(slides[current]);
-    revealActiveSidebarItem();
+    T.resizePlotlyInSlide(slides[T.state.current]);
+    T.renderMermaidInSlide(slides[T.state.current]);
+    T.renderTabulatorsInSlide(slides[T.state.current]);
+    T.revealActiveSidebarItem();
   }
 
   // Step in the direction of delta. While a search filter is active, skip
@@ -2036,13 +2158,14 @@ cell-overflow  cell-halign-left cell-valign-top"
   // if it sits inside a collapsed section — goTo() -> revealActiveSidebarItem()
   // expands its ancestors so arrow keys can move into and unfold a folded node.
   function navigate(delta) {
+    var slides = T.state.slides;
     var step = delta < 0 ? -1 : 1;
-    if (!_searchActive) {
-      goTo(current + step);
+    if (!T.state.searchActive) {
+      goTo(T.state.current + step);
       return;
     }
     var items = document.querySelectorAll(".sidebar-item");
-    var i = current + step;
+    var i = T.state.current + step;
     while (i >= 0 && i < slides.length) {
       var it = items[i];
       if (!it || !it.classList.contains("sidebar-hidden")) { goTo(i); return; }
@@ -2052,42 +2175,80 @@ cell-overflow  cell-halign-left cell-valign-top"
   }
 
   function goToSlide(slideId) {
-    var idx = slides.findIndex(function(s) { return s.id === slideId; });
+    var idx = T.state.slides.findIndex(function(s) { return s.id === slideId; });
     if (idx >= 0) goTo(idx);
   }
 
   function goToIndex(n) {
-    goTo(Math.max(1, Math.min(n, slides.length)) - 1);
+    goTo(Math.max(1, Math.min(n, T.state.slides.length)) - 1);
   }
 
   function onHashChange() {
     var id = window.location.hash.slice(1);
-    var idx = slides.findIndex(function(s) { return s.id === id; });
+    var idx = T.state.slides.findIndex(function(s) { return s.id === id; });
     if (idx >= 0) goTo(idx, false);
   }
 
-  // -- Keyboard --------------------------------------------
+  T.goTo         = goTo;
+  T.navigate     = navigate;
+  T.goToSlide    = goToSlide;
+  T.goToIndex    = goToIndex;
+  T.onHashChange = onHashChange;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/keyboard.js --- */
+/* montin — keyboard.js
+   ----------------------------------------------------------------------------
+   Global key bindings for the deck. Inside the lightbox, arrows navigate
+   thumbnails and Escape closes it; otherwise arrows change slide and the
+   single-key shortcuts drive fullscreen/overview/sidebar/zoom.
+
+   T.state: none.
+   Calls: T.lbNavThumb, T.closeLightbox, T.navigate, T.toggleFullscreen,
+          T.toggleOverview, T.toggleSidebar, T.deckZoom, T.deckZoomReset.
+   Registers: T.onKey (boot wires the keydown listener).
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
   function onKey(e) {
     if (e.target.tagName === "INPUT") return;
     var lb = document.getElementById("lightbox");
     var lbOpen = lb && !lb.classList.contains("hidden");
     if (lbOpen) {
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") { lbNavThumb(1); return; }
-      if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   { lbNavThumb(-1); return; }
-      if (e.key === "Escape") { closeLightbox(); return; }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { T.lbNavThumb(1); return; }
+      if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   { T.lbNavThumb(-1); return; }
+      if (e.key === "Escape") { T.closeLightbox(); return; }
       return;
     }
     switch (e.key) {
-      case "ArrowRight": case "ArrowDown":  navigate(1);  break;
-      case "ArrowLeft":  case "ArrowUp":    navigate(-1); break;
-      case "f": case "F": toggleFullscreen(); break;
-      case "g": case "G": toggleOverview(); break;
-      case "b": case "B": toggleSidebar(); break;
-      case "+": case "=": deckZoom(1);  break;
-      case "-": case "_": deckZoom(-1); break;
-      case "0": deckZoomReset(); break;
+      case "ArrowRight": case "ArrowDown":  T.navigate(1);  break;
+      case "ArrowLeft":  case "ArrowUp":    T.navigate(-1); break;
+      case "f": case "F": T.toggleFullscreen(); break;
+      case "g": case "G": T.toggleOverview(); break;
+      case "b": case "B": T.toggleSidebar(); break;
+      case "+": case "=": T.deckZoom(1);  break;
+      case "-": case "_": T.deckZoom(-1); break;
+      case "0": T.deckZoomReset(); break;
     }
   }
+
+  T.onKey = onKey;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/view.js --- */
+/* montin — view.js
+   ----------------------------------------------------------------------------
+   Small chrome toggles: fullscreen, the overview grid, and the cell-expand
+   modal.
+
+   T.state: none.   Calls: none.
+   Registers: T.toggleFullscreen, T.toggleOverview, T.expandCell, T.closeModal.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
 
   // -- Fullscreen ------------------------------------------
   function toggleFullscreen() {
@@ -2121,8 +2282,29 @@ cell-overflow  cell-halign-left cell-valign-top"
     if (modal) modal.classList.add("hidden");
   }
 
-  // -- Lightbox (zoom/pan + thumbnails) -----------------------
-  // Internal lightbox state
+  T.toggleFullscreen = toggleFullscreen;
+  T.toggleOverview   = toggleOverview;
+  T.expandCell       = expandCell;
+  T.closeModal       = closeModal;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/lightbox.js --- */
+/* montin — lightbox.js
+   ----------------------------------------------------------------------------
+   Full-screen image viewer with mouse-wheel/pinch-less zoom, drag/touch pan,
+   and a thumbnail strip built from every image in the active slide.
+
+   Also owns the shared image-src helpers (_svgDataUri / _imgSrc) used by copy.js.
+
+   T.state: reads slides, current.   Calls: none.
+   Registers: T.initLightbox, T.openLightbox, T.openLightboxFromSlider,
+              T.closeLightbox, T.lbGoTo, T.lbNavThumb, T.lbResetZoom, T._imgSrc.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
+  // Internal lightbox state (local — only this module touches it).
   var _lb = {
     images: [],      // [{src, alt}]
     index: 0,
@@ -2227,7 +2409,7 @@ cell-overflow  cell-halign-left cell-valign-top"
    * Returns [{src, alt}].
    */
   function _collectSlideImages() {
-    var currentSlide = slides[current];
+    var currentSlide = T.state.slides[T.state.current];
     if (!currentSlide) return [];
     var imgs = [];
     // Regular images and inline-SVG figures (cell-image)
@@ -2307,7 +2489,29 @@ cell-overflow  cell-halign-left cell-valign-top"
     _resetLbView();
   }
 
-  // -- Image Slider ----------------------------------------
+  T.initLightbox          = initLightbox;
+  T.openLightbox          = openLightbox;
+  T.openLightboxFromSlider = openLightboxFromSlider;
+  T.closeLightbox         = closeLightbox;
+  T.lbGoTo                = lbGoTo;
+  T.lbNavThumb            = lbNavThumb;
+  T.lbResetZoom           = lbResetZoom;
+  T._imgSrc               = _imgSrc;   // shared with copy.js
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/slider.js --- */
+/* montin — slider.js
+   ----------------------------------------------------------------------------
+   Per-slide image sliders: show one slide at a time, sync the dots, and wire the
+   prev/next + dot controls.
+
+   T.state: none.   Calls: none.
+   Registers: T.initSliders, T.sliderNav.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
   // Per-slider state: id -> { current }
   var _sliders = {};
 
@@ -2356,12 +2560,38 @@ cell-overflow  cell-halign-left cell-valign-top"
     });
   }
 
+  T.initSliders = initSliders;
+  T.sliderNav   = sliderNav;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/sidebar.js --- */
+/* montin — sidebar.js
+   ----------------------------------------------------------------------------
+   The slide-list sidebar: width persistence + collapse toggle, drag-to-resize,
+   collapsible sections (level-based nesting), and the search filter.
+
+   Search state is shared with navigation (it skips hidden items while a filter
+   is active), so the "is a filter active?" flag lives on T.state.searchActive;
+   everything else here is module-local.
+
+   T.state: reads/writes searchActive; reads current.
+   Calls: none.
+   Registers: T.initSidebar, T.initSidebarSections, T.toggleSidebar,
+              T.revealActiveSidebarItem, T.filterSidebar, T.toggleSection,
+              T.toggleRegexMode, T.collapseAllSections, T.expandAllSections,
+              T.collapseLevel, T.expandLevel.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
   // -- Sidebar toggle & resize ----------------------------
+  var _savedSidebarWidth = "220px";
   var _sbMinWidth = 120;
   var _sbMaxWidth = 480;
 
   function initSidebar() {
-    var saved = localStorage.getItem("tessera-sb-width");
+    var saved = localStorage.getItem("montin-sb-width");
     if (saved) {
       var w = parseInt(saved, 10);
       if (w >= _sbMinWidth && w <= _sbMaxWidth) {
@@ -2372,7 +2602,7 @@ cell-overflow  cell-halign-left cell-valign-top"
     // Reconcile collapse state. A remembered toggle (localStorage) wins over
     // the server-rendered default; otherwise the .sb-collapsed body class
     // (set when sidebar_collapsed=True) governs.
-    var storedCollapsed = localStorage.getItem("tessera-sb-collapsed");
+    var storedCollapsed = localStorage.getItem("montin-sb-collapsed");
     if (storedCollapsed === "1") {
       document.documentElement.style.setProperty("--sidebar-width", "0px");
       document.body.classList.add("sb-collapsed");
@@ -2401,7 +2631,7 @@ cell-overflow  cell-halign-left cell-valign-top"
         var w = getComputedStyle(document.documentElement)
           .getPropertyValue("--sidebar-width").trim();
         _savedSidebarWidth = w;
-        localStorage.setItem("tessera-sb-width", parseInt(w, 10));
+        localStorage.setItem("montin-sb-width", parseInt(w, 10));
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
       }
@@ -2434,19 +2664,18 @@ cell-overflow  cell-halign-left cell-valign-top"
       document.documentElement.style.setProperty("--sidebar-width", _savedSidebarWidth);
     }
     markSidebarAnimating();
-    localStorage.setItem("tessera-sb-collapsed", collapsed ? "1" : "0");
+    localStorage.setItem("montin-sb-collapsed", collapsed ? "1" : "0");
   }
 
   // -- Sidebar search & collapsible sections --------------
   var _collapsedSections = new Set();
-  var _searchActive = false;
   var _searchRe = null;
   var _regexMode = false;          // literal by default; remembered across reloads
   var _ancestors = new Map();      // item el -> [ancestor section id, ...] (outermost first)
   var _sectionGroups = new Map();  // section id -> [descendant item els]
   var _searchTimer = null;
-  var SB_COLLAPSED_KEY = "tessera-sb-collapsed-sections";
-  var SB_REGEX_KEY = "tessera-sb-regex";
+  var SB_COLLAPSED_KEY = "montin-sb-collapsed-sections";
+  var SB_REGEX_KEY = "montin-sb-regex";
 
   function initSidebarSections() {
     if (!document.getElementById("slide-list")) return;   // chromeless / no sidebar
@@ -2566,21 +2795,21 @@ cell-overflow  cell-halign-left cell-valign-top"
     var input = document.getElementById("sidebar-search");
     value = (value || "").trim();
     if (value === "") {
-      _searchActive = false; _searchRe = null;
+      T.state.searchActive = false; _searchRe = null;
       if (input) input.classList.remove("sidebar-search-error");
     } else if (_regexMode) {
       try {
         _searchRe = new RegExp(value, "i");
-        _searchActive = true;
+        T.state.searchActive = true;
         if (input) input.classList.remove("sidebar-search-error");
       } catch (e) {
-        _searchRe = null; _searchActive = false;   // invalid regex -> no filter
+        _searchRe = null; T.state.searchActive = false;   // invalid regex -> no filter
         if (input) input.classList.add("sidebar-search-error");
       }
     } else {
       // Literal mode: escape the query so specials match verbatim (always valid).
       _searchRe = new RegExp(escapeRegex(value), "i");
-      _searchActive = true;
+      T.state.searchActive = true;
       if (input) input.classList.remove("sidebar-search-error");
     }
     applySidebarVisibility();
@@ -2623,7 +2852,7 @@ cell-overflow  cell-halign-left cell-valign-top"
   }
 
   function matchesSearch(el) {
-    if (!_searchActive || !_searchRe) return true;
+    if (!T.state.searchActive || !_searchRe) return true;
     return _searchRe.test(getSearchHaystack(el));
   }
 
@@ -2675,7 +2904,7 @@ cell-overflow  cell-halign-left cell-valign-top"
     var items = document.querySelectorAll(".sidebar-item");
     if (!items.length) return;
     items.forEach(function (el) {
-      var visible = _searchActive ? matchesSearch(el) : !hasCollapsedAncestor(el);
+      var visible = T.state.searchActive ? matchesSearch(el) : !hasCollapsedAncestor(el);
       el.classList.toggle("sidebar-hidden", !visible);
     });
   }
@@ -2683,9 +2912,9 @@ cell-overflow  cell-halign-left cell-valign-top"
   // Auto-expand collapsed ancestors of the active item so keyboard/arrow nav
   // into a folded section reveals it. Called at the end of goTo().
   function revealActiveSidebarItem() {
-    if (_searchActive) return;   // search shows matches regardless of collapse
+    if (T.state.searchActive) return;   // search shows matches regardless of collapse
     var items = document.querySelectorAll(".sidebar-item");
-    var el = items[current];
+    var el = items[T.state.current];
     if (!el) return;
     var anc = _ancestors.get(el) || [];
     var changed = false;
@@ -2694,12 +2923,37 @@ cell-overflow  cell-halign-left cell-valign-top"
     });
     if (changed) {
       persistCollapsed();
-      if (!_searchActive) applySidebarVisibility();
+      if (!T.state.searchActive) applySidebarVisibility();
       el.scrollIntoView({ block: "nearest" });   // re-scroll now that it is shown
     }
   }
 
-  // -- Copy -----------------------------------------------
+  T.initSidebar            = initSidebar;
+  T.initSidebarSections    = initSidebarSections;
+  T.toggleSidebar          = toggleSidebar;
+  T.revealActiveSidebarItem = revealActiveSidebarItem;
+  T.filterSidebar          = filterSidebar;
+  T.toggleSection          = toggleSection;
+  T.toggleRegexMode        = toggleRegexMode;
+  T.collapseAllSections    = collapseAllSections;
+  T.expandAllSections      = expandAllSections;
+  T.collapseLevel          = collapseLevel;
+  T.expandLevel            = expandLevel;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/copy.js --- */
+/* montin — copy.js
+   ----------------------------------------------------------------------------
+   Copy-to-clipboard for cells: text bodies, and figure/image cells rendered to
+   a PNG (with graceful fallbacks to copying the src URL).
+
+   T.state: none.   Calls: T._imgSrc (shared image-src helper from lightbox.js).
+   Registers: T.copyCell, T.copyImage.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
   function copyCell(btn) {
     var cell = btn.closest(".cell");
     var body = cell && cell.querySelector(".cell-body");
@@ -2735,7 +2989,7 @@ cell-overflow  cell-halign-left cell-valign-top"
         || cell.querySelector(".matplotlib-svg")
         || cell.querySelector("img, svg");
     }
-    var src = _imgSrc(el);
+    var src = T._imgSrc(el);
     if (!src) return;
 
     var canCopyImg = navigator.clipboard && window.ClipboardItem;
@@ -2773,6 +3027,26 @@ cell-overflow  cell-halign-left cell-valign-top"
     };
     img.src = src;
   }
+
+  T.copyCell  = copyCell;
+  T.copyImage = copyImage;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/charts.js --- */
+/* montin — charts.js
+   ----------------------------------------------------------------------------
+   Lazy rendering for the three optional renderers — Plotly, Mermaid, Tabulator.
+   Each is a no-op if its library isn't bundled. Tables build the first time
+   their slide is shown (so they measure while visible) and redraw on every
+   (re)activation and on stage re-fit.
+
+   T.state: none.   Calls: T.expandCell (expandPlotly delegates to it).
+   Registers: T.initPlotlyCharts, T.resizePlotlyInSlide, T.renderMermaidInSlide,
+              T.renderTabulatorsInSlide, T.expandPlotly.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
 
   // -- Plotly ----------------------------------------------
   // Pull text/grid colours from the active theme's CSS variables so Plotly
@@ -2878,7 +3152,7 @@ cell-overflow  cell-halign-left cell-valign-top"
 
   function renderTabulatorsInSlide(slideEl) {
     if (typeof Tabulator === "undefined") return;
-    slideEl.querySelectorAll(".tessera-tabulator").forEach(function(el) {
+    slideEl.querySelectorAll(".montin-tabulator").forEach(function(el) {
       buildTabulator(el);
       var t = el._tabulator;
       // Defer the redraw so it runs after the stage transform / layout settles.
@@ -2887,37 +3161,307 @@ cell-overflow  cell-halign-left cell-valign-top"
   }
 
   function expandPlotly(btn) {
-    expandCell(btn);
+    T.expandCell(btn);
+  }
+
+  // -- Print support ---------------------------------------
+  // The live widgets don't print well: Tabulator is a virtual-DOM table (only
+  // visible rows in the DOM, internal scroll) and its native printAsHtml hook
+  // conflicts across multiple tables; Plotly is a fixed-size on-screen SVG whose
+  // legend gets clipped. So on `beforeprint` we generate a print-only static
+  // fallback next to each widget — a plain <table> from the row data, and a
+  // scalable SVG snapshot of each chart — and the print CSS hides the live
+  // widget and shows the fallback. Everything here is synchronous so it is in
+  // place before the browser snapshots the page.
+
+  function _flatColumns(defs) {
+    var out = [];
+    (defs || []).forEach(function (c) {
+      if (c.columns && c.columns.length) out = out.concat(_flatColumns(c.columns));
+      else out.push(c);
+    });
+    return out;
+  }
+
+  // Build/refresh a static <table> from a Tabulator's *config* (the inlined
+  // {id}-cfg JSON), not the live instance: Tabulator builds asynchronously, so a
+  // freshly-built widget's getData() is still empty during the synchronous
+  // beforeprint pass — only the already-rendered slide would have data. The
+  // config carries every column and every row up front, so this works for all
+  // slides (visited or not) and prints the full data set. Hidden on screen.
+  function buildPrintTable(el) {
+    var cfgEl = document.getElementById(el.id + "-cfg");
+    if (!cfgEl) return;
+    var cfg;
+    try { cfg = JSON.parse(cfgEl.textContent); } catch (e) { return; }
+    var data = cfg.data || [];
+    var cols = _flatColumns(cfg.columns);
+    if (!cols.length) {                 // autoColumns / multi-sheet -> derive
+      if (!data.length) return;
+      cols = Object.keys(data[0]).map(function (k) { return { title: k, field: k }; });
+    }
+
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains("hs-print-table")) next.remove();
+
+    var tbl = document.createElement("table");
+    tbl.className = "hs-table hs-print-table";
+    var thead = document.createElement("thead");
+    var htr = document.createElement("tr");
+    cols.forEach(function (c) {
+      var th = document.createElement("th");
+      th.textContent = c.title || c.field || "";
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    tbl.appendChild(thead);
+
+    var tbody = document.createElement("tbody");
+    data.forEach(function (row, i) {
+      var tr = document.createElement("tr");
+      cols.forEach(function (c) {
+        var td = document.createElement("td");
+        var v = c.field ? row[c.field] : (i + 1);   // fieldless col == row number
+        td.textContent = (v === undefined || v === null) ? "" : v;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    el.parentNode.insertBefore(tbl, el.nextSibling);
+  }
+
+  // Build/refresh a scalable inline-SVG snapshot of a Plotly chart (includes the
+  // legend) next to the live container; hidden on screen, shown in print.
+  function buildPrintChart(el) {
+    if (!(window.Plotly && Plotly.Snapshot && Plotly.Snapshot.toSVG)) return;
+    if (!el._fullLayout) return;        // never rendered (unvisited) -> skip
+    var svg;
+    try { svg = Plotly.Snapshot.toSVG(el); } catch (e) { return; }
+    if (!svg) return;
+    // toSVG returns a string in most builds, but coerce a node just in case.
+    if (typeof svg !== "string") {
+      svg = svg.outerHTML || new XMLSerializer().serializeToString(svg);
+    }
+
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains("plotly-print")) next.remove();
+
+    var wrap = document.createElement("div");
+    wrap.className = "plotly-print";
+    wrap.innerHTML = svg;
+    // The exported SVG carries fixed width/height; convert to a viewBox so it
+    // scales to the print cell instead of overflowing it.
+    var s = wrap.querySelector("svg");
+    if (s) {
+      var w = parseFloat(s.getAttribute("width"));
+      var h = parseFloat(s.getAttribute("height"));
+      if (w && h && !s.getAttribute("viewBox")) s.setAttribute("viewBox", "0 0 " + w + " " + h);
+      s.removeAttribute("width");
+      s.removeAttribute("height");
+      s.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    }
+    el.parentNode.insertBefore(wrap, el.nextSibling);
+  }
+
+  function prepareForPrint() {
+    // Static tables are built from the inlined config, so they work even if the
+    // live Tabulator never rendered (unvisited slide / library not yet ready).
+    document.querySelectorAll(".montin-tabulator").forEach(buildPrintTable);
+    document.querySelectorAll(".plotly-container").forEach(buildPrintChart);
+  }
+
+  function initChartPrinting() {
+    window.addEventListener("beforeprint", prepareForPrint);
+  }
+
+  T.initPlotlyCharts        = initPlotlyCharts;
+  T.resizePlotlyInSlide     = resizePlotlyInSlide;
+  T.renderMermaidInSlide    = renderMermaidInSlide;
+  T.renderTabulatorsInSlide = renderTabulatorsInSlide;
+  T.expandPlotly            = expandPlotly;
+  T.initChartPrinting       = initChartPrinting;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/touch.js --- */
+/* montin — touch.js
+   ----------------------------------------------------------------------------
+   Touchscreen gestures on the deck: one-finger horizontal swipe to change slide
+   (left -> next, right -> previous) and two-finger pinch to drive the deck zoom.
+   Swipe only fires while the slide fits (<=100% zoom, no horizontal overflow) so
+   a zoomed-in slide can still be panned natively. #main has touch-action:
+   pan-x pan-y (layout.css) so the browser's own pinch/double-tap zoom is off and
+   we can preventDefault here.
+
+   T.state: reads deckZoom.
+   Calls: T.navigate, T.applyDeckZoom, T.setDeckZoomLive.
+   Registers: T.initTouchGestures.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
+  var _touch = { startX: 0, startY: 0, swiping: false,
+                 pinching: false, startDist: 0, startZoom: 1, lockedAfterPinch: false };
+  var SWIPE_MIN = 50; // px of horizontal travel to count as a swipe
+
+  function initTouchGestures() {
+    var main = document.getElementById("main");
+    if (!main) return;
+
+    function dist(t) {
+      var dx = t[0].clientX - t[1].clientX;
+      var dy = t[0].clientY - t[1].clientY;
+      return Math.hypot(dx, dy);
+    }
+
+    // A horizontal swipe starting here should be left to the element (a control
+    // that wants the drag, or something the user scrolls sideways) rather than
+    // switching slides. Walk up to #main looking for an interactive target or an
+    // ancestor that scrolls horizontally (wide tables, code blocks, etc.).
+    function swipeBlocked(target) {
+      if (target.closest("a, button, input, textarea, select, .plotly-container, .cell-image-slider")) return true;
+      for (var el = target; el && el !== main; el = el.parentElement) {
+        if (el.nodeType !== 1) continue;
+        if (el.scrollWidth > el.clientWidth + 1) {
+          var ox = getComputedStyle(el).overflowX;
+          if (ox === "auto" || ox === "scroll") return true;
+        }
+      }
+      return false;
+    }
+
+    function startPinch(e) {
+      _touch.pinching = true;
+      _touch.swiping = false;
+      _touch.startDist = dist(e.touches);
+      _touch.startZoom = T.state.deckZoom;
+    }
+
+    main.addEventListener("touchstart", function (e) {
+      var lb = document.getElementById("lightbox");
+      if (lb && !lb.classList.contains("hidden")) return; // lightbox has its own
+
+      if (e.touches.length === 2) {
+        startPinch(e);
+        e.preventDefault();
+        return;
+      }
+
+      if (e.touches.length === 1 && !_touch.pinching && !_touch.lockedAfterPinch) {
+        // Only swipe-navigate when the slide fits; otherwise let it pan.
+        if (T.state.deckZoom > 1 || main.scrollWidth > main.clientWidth + 1) return;
+        if (swipeBlocked(e.target)) return;
+        _touch.swiping = true;
+        _touch.startX = e.touches[0].clientX;
+        _touch.startY = e.touches[0].clientY;
+      }
+    }, { passive: false });
+
+    main.addEventListener("touchmove", function (e) {
+      // A second finger can arrive without a fresh 2-touch touchstart reaching us
+      // (e.g. DevTools emulation); pick up the pinch here too.
+      if (e.touches.length === 2) {
+        if (!_touch.pinching) { startPinch(e); e.preventDefault(); return; }
+        var ratio = dist(e.touches) / (_touch.startDist || 1);
+        T.setDeckZoomLive(_touch.startZoom * ratio);
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    function onEnd(e) {
+      if (_touch.swiping) {
+        var t = e.changedTouches[0];
+        var dx = t.clientX - _touch.startX;
+        var dy = t.clientY - _touch.startY;
+        if (Math.abs(dx) >= SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          T.navigate(dx < 0 ? 1 : -1); // swipe left -> next, swipe right -> previous
+        }
+        _touch.swiping = false;
+      }
+      if (_touch.pinching && e.touches.length < 2) {
+        _touch.pinching = false;
+        _touch.lockedAfterPinch = true; // ignore the leftover finger as a swipe
+        T.applyDeckZoom(); // finalize with the full (table re-render) path
+      }
+      if (e.touches.length === 0) {
+        _touch.lockedAfterPinch = false;
+      }
+    }
+    main.addEventListener("touchend", onEnd, { passive: true });
+    main.addEventListener("touchcancel", onEnd, { passive: true });
+  }
+
+  T.initTouchGestures = initTouchGestures;
+
+})(window.Montin = window.Montin || {});
+
+/* --- js/boot.js --- */
+/* montin — boot.js
+   ----------------------------------------------------------------------------
+   Loads LAST. Wires the global event listeners, runs each module's initialiser
+   in order, re-exports the HTML-facing API (called from inline onclick=...) onto
+   window, and boots once the DOM is ready.
+
+   T.state: reads slides, current (deep-link to the hash slide).
+   Calls: every module's init and event handlers.   Registers: nothing new on T.
+   ------------------------------------------------------------------------- */
+(function (T) {
+  "use strict";
+
+  function init() {
+    if (T.state.slides.length === 0) return;
+
+    // Deep link via hash (#slide-3)
+    var hash = window.location.hash.slice(1);
+    var fromHash = T.state.slides.findIndex(function (s) { return s.id === hash; });
+    T.goTo(fromHash >= 0 ? fromHash : 0, false);
+
+    window.addEventListener("keydown", T.onKey);
+    window.addEventListener("hashchange", T.onHashChange);
+
+    T.initPlotlyCharts();
+    T.initSliders();
+    T.initLightbox();
+    T.initSidebar();
+    T.initSidebarSections();
+    T.initToolbar();
+    T.initStage();
+    T.initTouchGestures();
+    T.initChartPrinting();
+    T.applyDeckZoom();
   }
 
   // -- Expose global functions ----------------------------
-  window.toggleSidebar         = toggleSidebar;
-  window.navigate              = navigate;
-  window.goToSlide             = goToSlide;
-  window.goToIndex             = goToIndex;
-  window.toggleFullscreen      = toggleFullscreen;
-  window.toggleOverview        = toggleOverview;
-  window.expandCell            = expandCell;
-  window.expandPlotly          = expandPlotly;
-  window.closeModal            = closeModal;
-  window.openLightbox          = openLightbox;
-  window.openLightboxFromSlider = openLightboxFromSlider;
-  window.closeLightbox         = closeLightbox;
-  window.lbGoTo                = lbGoTo;
-  window.lbNavThumb            = lbNavThumb;
-  window.lbResetZoom           = lbResetZoom;
-  window.copyCell              = copyCell;
-  window.copyImage             = copyImage;
-  window.sliderNav             = sliderNav;
-  window.filterSidebar         = filterSidebar;
-  window.toggleSection         = toggleSection;
-  window.toggleRegexMode       = toggleRegexMode;
-  window.collapseAllSections   = collapseAllSections;
-  window.expandAllSections     = expandAllSections;
-  window.collapseLevel         = collapseLevel;
-  window.expandLevel           = expandLevel;
-  window.deckZoom              = deckZoom;
-  window.deckZoomReset         = deckZoomReset;
+  // Templates call these bare (e.g. onclick="navigate(1)"), so mirror the deck
+  // API from the namespace onto window. Add new HTML-facing functions here.
+  window.toggleSidebar          = T.toggleSidebar;
+  window.navigate               = T.navigate;
+  window.goToSlide              = T.goToSlide;
+  window.goToIndex              = T.goToIndex;
+  window.toggleFullscreen       = T.toggleFullscreen;
+  window.toggleOverview         = T.toggleOverview;
+  window.expandCell             = T.expandCell;
+  window.expandPlotly           = T.expandPlotly;
+  window.closeModal             = T.closeModal;
+  window.openLightbox           = T.openLightbox;
+  window.openLightboxFromSlider = T.openLightboxFromSlider;
+  window.closeLightbox          = T.closeLightbox;
+  window.lbGoTo                 = T.lbGoTo;
+  window.lbNavThumb             = T.lbNavThumb;
+  window.lbResetZoom            = T.lbResetZoom;
+  window.copyCell               = T.copyCell;
+  window.copyImage              = T.copyImage;
+  window.sliderNav              = T.sliderNav;
+  window.filterSidebar          = T.filterSidebar;
+  window.toggleSection          = T.toggleSection;
+  window.toggleRegexMode        = T.toggleRegexMode;
+  window.collapseAllSections    = T.collapseAllSections;
+  window.expandAllSections      = T.expandAllSections;
+  window.collapseLevel          = T.collapseLevel;
+  window.expandLevel            = T.expandLevel;
+  window.deckZoom               = T.deckZoom;
+  window.deckZoomReset          = T.deckZoomReset;
 
   // -- Boot -----------------------------------------------
   if (document.readyState === "loading") {
@@ -2926,7 +3470,7 @@ cell-overflow  cell-halign-left cell-valign-top"
     init();
   }
 
-})();
+})(window.Montin = window.Montin || {});
 
 </script>
 

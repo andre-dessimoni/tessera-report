@@ -15,3 +15,12 @@
   margin: 1.25rem 0;
   background: #1a1a2e;
 }
+
+/* ------------------------------------------------------------------
+   Furo sidebar logo — constrain the vertical Montin mark.
+   `.sidebar-logo` is the <img>; lower max-width to shrink it.
+   ------------------------------------------------------------------ */
+.sidebar-logo {
+  max-width: 150px;   /* tune: smaller value = smaller logo */
+  height: auto;
+}
