@@ -379,6 +379,30 @@ class TabulatorCell(Cell):
             cell=self, dom_id=self._dom_id(),
             config_json=_safe_json(self._build_config()))
 
+    def _to_content(self, *, embed: bool = True) -> dict:
+        # The full Tabulator config (table data + UI options) is already a
+        # JSON-native tree; restore it verbatim rather than re-deriving it from
+        # the original constructor kwargs.
+        from montin.io import json_safe
+
+        return {
+            "config": json_safe(self._config),
+            "headers": list(self.headers),
+            "download": list(self.download),
+            "options": json_safe(self._options),
+            "persistence": self._persistence,
+        }
+
+    @classmethod
+    def _from_content(cls, content, params):
+        obj = cls._raw_new(params)
+        obj._config = content.get("config", {})
+        obj.headers = content.get("headers", [])
+        obj.download = content.get("download", [])
+        obj._options = content.get("options", {})
+        obj._persistence = content.get("persistence", False)
+        return obj
+
     def __repr__(self) -> str:
         return (
             f"TabulatorCell(ID={self.params.cell_id!r})"

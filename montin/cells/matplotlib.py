@@ -83,6 +83,45 @@ class MatplotlibCell(Cell):
             return env.get_template("cell_matplotlib_svg.html").render(cell=self)
         return env.get_template("cell_matplotlib.html").render(cell=self)
 
+    def _to_content(self, *, embed: bool = True) -> dict:
+        # The live Figure cannot be reconstructed; we persist the already-encoded
+        # image (always embedded — there is no external source to reference).
+        import base64
+
+        return {
+            "payload_b64": base64.b64encode(self._payload).decode("ascii"),
+            "mime": self._mime,
+            "ext": self._ext,
+            "is_svg": self.is_svg,
+            "fmt": self.fmt,
+            "lightbox": self.lightbox,
+            "save_source": self.save_source,
+        }
+
+    @classmethod
+    def _from_content(cls, content, params):
+        # Rebuild from the encoded payload without re-running _encode — so a saved
+        # report reloads (and re-renders) on a machine without matplotlib.
+        import base64
+
+        from montin.utils.media import data_uri
+
+        obj = cls._raw_new(params)
+        obj.lightbox = content.get("lightbox", True)
+        obj.fmt = content.get("fmt", "svg")
+        obj.fig = None
+        obj.save_source = content.get("save_source", False)
+        obj._payload = base64.b64decode(content["payload_b64"])
+        obj._mime = content["mime"]
+        obj._ext = content["ext"]
+        obj.is_svg = content.get("is_svg", obj._ext == "svg")
+        obj.resolved_src = ""
+        if obj.is_svg:
+            obj.src = obj._payload.decode("utf-8")
+        else:
+            obj.src = data_uri(obj._payload, obj._mime)
+        return obj
+
     def __repr__(self) -> str:
         return (f"MatplotlibCell(ID={self.params.cell_id!r}, fmt={self.fmt!r}) "
                 f"at row={self.params.row}, col={self.params.col})")

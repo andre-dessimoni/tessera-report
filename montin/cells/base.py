@@ -160,6 +160,95 @@ class Cell(ABC):
     def rowspan(self) -> int:
         return self.params.rowspan
 
+    # ------------------------------------------------------------------
+    # Serialisation (see montin.io for the file envelope / compression)
+    # ------------------------------------------------------------------
+
+    def to_dict(self, embed: bool = True) -> dict:
+        """Serialise this cell to a JSON-native dict (the *cell payload*).
+
+        The dict carries ``cell_type`` (the class name, used by
+        :meth:`from_dict` to pick the subtype), ``params`` (the resolved
+        :class:`CellParams`), and ``content`` (type-specific data produced by
+        :meth:`_to_content`).
+
+        Args:
+            embed: When ``True`` (default), image-bearing cells embed their data
+                inline (base64); when ``False`` they keep file paths / URLs as
+                references. Matplotlib / Plotly figures are always embedded.
+        """
+        from dataclasses import asdict
+
+        return {
+            "cell_type": type(self).__name__,
+            "params": asdict(self.params),
+            "content": self._to_content(embed=embed),
+        }
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        """Type-specific serialisable data. Overridden by subclasses.
+
+        The default (used by :class:`~montin.cells.misc.EmptyCell`) carries no
+        extra data.
+        """
+        return {}
+
+    def export(
+        self,
+        path: "str | Path",
+        *,
+        embed: bool = True,
+        compress: bool | None = None,
+    ) -> "Path":
+        """Write this cell to a JSON file (``kind="cell"``); return the path.
+
+        See :func:`montin.io.write_document` for ``compress`` semantics.
+        """
+        from montin.io import write_document
+
+        return write_document(path, "cell", self.to_dict(embed=embed), compress=compress)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Cell":
+        """Reconstruct a cell from a :meth:`to_dict` payload.
+
+        Dispatches on ``data["cell_type"]`` via the cell registry, so this can be
+        called as ``Cell.from_dict(...)`` regardless of the concrete subtype.
+        """
+        from montin.cells._registry import CELL_REGISTRY
+        from montin.exceptions import InvalidDataError
+
+        cell_type = data.get("cell_type")
+        target = CELL_REGISTRY.get(cell_type)
+        if target is None:
+            raise InvalidDataError(f"Unknown cell_type {cell_type!r} in cell document.")
+        params = CellParams(**data["params"])
+        return target._from_content(data.get("content", {}) or {}, params)
+
+    @classmethod
+    def _from_content(cls, content: dict, params: CellParams) -> "Cell":
+        """Build an instance from ``content`` + ``params``. Overridden by
+        subclasses; the default works for the no-extra-data case."""
+        return cls(params=params)
+
+    @classmethod
+    def from_file(cls, path: "str | Path") -> "Cell":
+        """Load a cell written by :meth:`export` (plain or gzipped)."""
+        from montin.io import read_document
+
+        _kind, payload = read_document(path, "cell")
+        return cls.from_dict(payload)
+
+    @classmethod
+    def _raw_new(cls, params: CellParams) -> "Cell":
+        """Create an instance *without* running its ``__init__``, then attach
+        ``params``. Used by reload paths that restore post-construction state
+        directly (e.g. an already-encoded figure) instead of re-running lossy or
+        dependency-heavy construction work."""
+        obj = cls.__new__(cls)
+        Cell.__init__(obj, params)
+        return obj
+
 
 # ---------------------------------------------------------------------------
 # @cell_method — decorator

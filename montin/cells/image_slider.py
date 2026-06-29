@@ -39,7 +39,37 @@ class ImageSliderCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_image_slider.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        from montin.io import embed_image_source
+
+        # Figures have no external source, so they are embedded even in reference
+        # mode; other sources are embedded only when embed=True.
+        sources = [
+            embed_image_source(s, to_webp=self.to_webp, quality=self.webp_quality)
+            if (embed or hasattr(s, "savefig"))
+            else str(s)
+            for s in self.sources
+        ]
+        return {
+            "sources": sources,
+            "captions": list(self.captions),
+            "to_webp": self.to_webp,
+            "webp_quality": self.webp_quality,
+            "save_source": self.save_source,
+        }
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(
+            sources=content.get("sources", []),
+            captions=content.get("captions", []),
+            params=params,
+            to_webp=content.get("to_webp", False),
+            webp_quality=content.get("webp_quality"),
+            save_source=content.get("save_source", False),
+        )
+
     def __repr__(self) -> str:
         return (
             f"ImageSliderCell(ID={self.params.cell_id!r}, sources={self.sources!r})"

@@ -43,7 +43,36 @@ class ImageCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_image.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        if embed:
+            from montin.io import embed_image_source
+
+            source = embed_image_source(
+                self.source, to_webp=self.to_webp, quality=self.webp_quality
+            )
+        else:
+            # Reference mode: keep the path / URL as text (breaks if it moves).
+            source = str(self.source)
+        return {
+            "source": source,
+            "lightbox": self.lightbox,
+            "to_webp": self.to_webp,
+            "webp_quality": self.webp_quality,
+            "save_source": self.save_source,
+        }
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(
+            source=content["source"],
+            lightbox=content.get("lightbox", True),
+            params=params,
+            to_webp=content.get("to_webp", False),
+            webp_quality=content.get("webp_quality"),
+            save_source=content.get("save_source", False),
+        )
+
     def __repr__(self) -> str:
         return (
             f"ImageCell(ID={self.params.cell_id!r}, source={str(self.source)!r})"

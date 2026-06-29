@@ -4,7 +4,8 @@
 
 ```{eval-rst}
 .. autoclass:: montin.Deck
-   :members: add_title, add_section, add_toc, add_slide, write
+   :members: add_title, add_section, add_toc, add_slide, write,
+             export, export_slides, import_slides, to_dict, from_dict, from_file
    :undoc-members: False
 ```
 
@@ -59,6 +60,10 @@
 ## Cells
 
 ```{eval-rst}
+.. autoclass:: montin.Cell
+   :members: export, to_dict, from_dict, from_file
+   :undoc-members: False
+
 .. autoclass:: montin.cells.text.TextCell
 .. autoclass:: montin.cells.misc.MetricCell
 .. autoclass:: montin.cells.table.TableCell

@@ -550,6 +550,234 @@ class Deck:
 
         return slide
 
+    def _attach_slide(self, slide: Slide, index: int | None = None) -> Slide:
+        """Register an already-built ``Slide`` on this deck (used by the import /
+        from_dict paths). Mirrors the tail of :meth:`_make_slide` but without
+        creating the slide. A colliding ``slide_id`` is auto-renamed so an import
+        never silently clobbers an existing slide.
+
+        ``index`` is a position in ``_slides`` (``list.insert`` semantics);
+        ``None`` appends. Does not autosave — callers decide when to write.
+        """
+        sid = slide.slide_id
+        if sid in self._slide_map and self._slide_map[sid] is not slide:
+            base, n = str(sid), 2
+            candidate = f"{base}-imported"
+            while candidate in self._slide_map:
+                candidate = f"{base}-imported-{n}"
+                n += 1
+            slide.slide_id = candidate
+            sid = candidate
+
+        if index is None:
+            self._slides.append(slide)
+        else:
+            self._slides.insert(index, slide)
+        self._slide_map[sid] = slide
+        self._slide_counter += 1
+        return slide
+
+    # ------------------------------------------------------------------
+    # Serialisation (see montin.io for the file envelope / compression)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _plugin_to_dict(plugin: Plugin) -> dict:
+        from dataclasses import asdict
+
+        return {"name": plugin.name, **asdict(plugin)}
+
+    @staticmethod
+    def _plugin_from_dict(data: dict) -> Plugin:
+        from montin.core.plugins import Plugins
+
+        registry = {
+            "plotly":    Plugins.Plotly,
+            "mermaid":   Plugins.Mermaid,
+            "highlight": Plugins.Highlight,
+            "mathjax":   Plugins.MathJax,
+            "tabulator": Plugins.Tabulator,
+        }
+        fields = dict(data)
+        target = registry.get(fields.pop("name", None), Plugin)
+        return target(**fields)
+
+    def to_dict(self, embed: bool = True, *, slides: list[Slide] | None = None) -> dict:
+        """Serialise the deck's configuration and slides to a JSON-native dict.
+
+        Args:
+            embed: Passed through to each cell (embed image data inline, or keep
+                references).
+            slides: Restrict the serialised slides to this subset (used by
+                :meth:`export_slides`). Defaults to every slide.
+        """
+        from dataclasses import asdict
+
+        slides = self._slides if slides is None else slides
+        custom_css = str(self.custom_css) if self.custom_css is not None else None
+        contents_folder = str(self.contents_folder) if self.contents_folder is not None else None
+        return {
+            "title":          self.title,
+            "author":         self.author,
+            "date":           self.date,
+            "version":        self.version,
+            "theme":          self.theme,
+            "custom_css":     custom_css,
+            "fontsize_scale": self.fontsize_scale,
+            "self_contained": self.self_contained,
+            "plugins":        [self._plugin_to_dict(p) for p in self.plugins],
+            "plugin_source":  self.plugin_source,
+            "slide_defaults": asdict(self.slide_defaults),
+            "cell_defaults":  asdict(self.cell_defaults),
+            "autosave":       self.autosave,
+            "autosave_level": self.autosave_level,
+            "size":           list(self.size) if self.size is not None else None,
+            "scale_up":          self.scale_up,
+            "keep_aspect_ratio": self.keep_aspect_ratio,
+            "show_sidebar":      self.show_sidebar,
+            "show_toolbar":      self.show_toolbar,
+            "sidebar_collapsed": self.sidebar_collapsed,
+            "sidebar_search":        self.sidebar_search,
+            "sidebar_search_scope":  self.sidebar_search_scope,
+            "sidebar_collapsible_sections": self.sidebar_collapsible_sections,
+            "preview_height":  self.preview_height,
+            "contents_folder": contents_folder,
+            "security":        asdict(self.security),
+            "slides":          [s.to_dict(embed=embed) for s in slides],
+            "sections":        [dict(s) for s in self._sections],
+        }
+
+    def export(
+        self,
+        path: "str | Path",
+        *,
+        embed: bool = True,
+        compress: bool | None = None,
+    ) -> Path:
+        """Write the whole deck to a JSON file (``kind="deck"``); return the path.
+
+        See :func:`montin.io.write_document` for ``compress`` semantics.
+        """
+        from montin.io import write_document
+
+        return write_document(path, "deck", self.to_dict(embed=embed), compress=compress)
+
+    def export_slides(
+        self,
+        path: "str | Path",
+        *,
+        by_pos: "list[int] | range | None" = None,
+        by_key: "list[Hashable] | None" = None,
+        embed: bool = True,
+        compress: bool | None = None,
+    ) -> Path:
+        """Write a selection of slides to a JSON file (``kind="slides"``).
+
+        Args:
+            path: Output file.
+            by_pos: Positional indices (a list or ``range``) into ``slides``.
+            by_key: Slide ids to look up in ``slide_map``.
+            embed: Embed image data inline (``True``) or keep references.
+            compress: gzip tri-state — see :func:`montin.io.write_document`.
+
+        With neither ``by_pos`` nor ``by_key`` given, every slide is exported.
+        When both are given the ``by_pos`` selection precedes the ``by_key`` one;
+        selection order is preserved.
+        """
+        from montin.io import write_document
+
+        selected = self._select_slides(by_pos, by_key)
+        payload = [s.to_dict(embed=embed) for s in selected]
+        return write_document(path, "slides", payload, compress=compress)
+
+    def _select_slides(self, by_pos, by_key) -> list[Slide]:
+        if by_pos is None and by_key is None:
+            return list(self._slides)
+        out: list[Slide] = []
+        if by_pos is not None:
+            out.extend(self._slides[i] for i in by_pos)
+        if by_key is not None:
+            out.extend(self._slide_map[k] for k in by_key)
+        return out
+
+    def import_slides(self, path: "str | Path", index: int = -1) -> list[Slide]:
+        """Load slide(s) from a JSON file and insert them into this deck.
+
+        Accepts both a single-slide file (``kind="slide"``) and a multi-slide
+        file (``kind="slides"``). ``index`` is where the (first) slide lands in
+        ``slides``: ``-1`` (default) appends at the end; any other value follows
+        ``list.insert`` semantics, with subsequent slides kept in order after it.
+        Colliding slide ids are auto-renamed. Returns the inserted slides.
+        """
+        from montin.io import read_document
+
+        kind, payload = read_document(path, ("slide", "slides"))
+        slide_dicts = [payload] if kind == "slide" else list(payload)
+
+        n = len(self._slides)
+        if index == -1:
+            base = n
+        elif index < 0:
+            base = max(0, n + index + 1)
+        else:
+            base = min(index, n)
+
+        new_slides: list[Slide] = []
+        for offset, sd in enumerate(slide_dicts):
+            slide = Slide.from_dict(sd, parent=self)
+            self._attach_slide(slide, index=base + offset)
+            new_slides.append(slide)
+
+        if self.autosave:
+            self.write(self.autosave)
+        return new_slides
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Deck":
+        """Reconstruct a whole deck from a :meth:`to_dict` payload."""
+        sd = data.get("slide_defaults")
+        cd = data.get("cell_defaults")
+        deck = cls(
+            title          = data["title"],
+            author         = data.get("author", ""),
+            date           = data.get("date", ""),
+            version        = data.get("version", ""),
+            theme          = data.get("theme", "default"),
+            custom_css     = data.get("custom_css"),
+            fontsize_scale = data.get("fontsize_scale", 1.0),
+            self_contained = data.get("self_contained", True),
+            plugins        = [cls._plugin_from_dict(p) for p in data.get("plugins", [])],
+            plugin_source  = data.get("plugin_source", "cdn"),
+            slide_defaults = SlideDefaults(**sd) if sd else SlideDefaults(),
+            cell_defaults  = CellDefaults(**cd) if cd else CellDefaults(),
+            autosave       = data.get("autosave"),
+            autosave_level = data.get("autosave_level", "slide"),
+            size           = tuple(data["size"]) if data.get("size") else None,
+            scale_up          = data.get("scale_up", False),
+            keep_aspect_ratio = data.get("keep_aspect_ratio", True),
+            show_sidebar      = data.get("show_sidebar", True),
+            show_toolbar      = data.get("show_toolbar", True),
+            sidebar_collapsed = data.get("sidebar_collapsed", False),
+            sidebar_search        = data.get("sidebar_search", True),
+            sidebar_search_scope  = data.get("sidebar_search_scope", "title"),
+            sidebar_collapsible_sections = data.get("sidebar_collapsible_sections", True),
+            preview_height  = data.get("preview_height"),
+            contents_folder = data.get("contents_folder"),
+            security        = Security(**data["security"]) if data.get("security") else None,
+        )
+        for sd in data.get("slides", []):
+            deck._attach_slide(Slide.from_dict(sd, parent=deck))
+        deck._sections = [dict(s) for s in data.get("sections", [])]
+        return deck
+
+    @classmethod
+    def from_file(cls, path: "str | Path") -> "Deck":
+        """Load a deck written by :meth:`export` (plain or gzipped)."""
+        from montin.io import read_document
+
+        _kind, payload = read_document(path, "deck")
+        return cls.from_dict(payload)
+
     # ------------------------------------------------------------------
     # Read-only properties
     # ------------------------------------------------------------------

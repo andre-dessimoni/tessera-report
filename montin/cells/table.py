@@ -39,6 +39,30 @@ class TableCell(Cell):
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_table.html").render(cell=self)
 
+    def _to_content(self, *, embed: bool = True) -> dict:
+        from montin.io import json_safe
+
+        return {
+            "headers": json_safe(self.headers),
+            "rows": json_safe(self.rows),
+            "separator": self.separator,
+            "index": self.index,
+        }
+
+    @classmethod
+    def _from_content(cls, content, params):
+        # Rebuild straight from the normalised (headers, rows) — a list[list]
+        # where the first row is the header — so normalize_table_data is a no-op
+        # round-trip rather than re-parsing the original input.
+        headers = content.get("headers", [])
+        rows = content.get("rows", [])
+        return cls(
+            data=[headers, *rows],
+            separator=content.get("separator", "auto"),
+            index=content.get("index", False),
+            params=params,
+        )
+
     def __repr__(self) -> str:
         return (
             f"TableCell(ID={self.params.cell_id!r}_, "

@@ -1055,6 +1055,173 @@ class Slide:
             return preview_error(self, exc)
 
     # ------------------------------------------------------------------
+    # Serialisation (see montin.io for the file envelope / compression)
+    # ------------------------------------------------------------------
+
+    def to_dict(self, embed: bool = True) -> dict:
+        """Serialise this slide (and its cells) to a JSON-native dict.
+
+        Args:
+            embed: Passed through to each cell's :meth:`Cell.to_dict` — embed
+                image data inline (``True``, default) or keep references.
+        """
+        from dataclasses import asdict
+
+        # None for title/section/toc slides (which carry no cell defaults).
+        cell_defaults = asdict(self._cell_defaults) if self._cell_defaults is not None else None
+        return {
+            "slide_id":      self.slide_id,
+            "title":         self.title,
+            "subtitle":      self.subtitle,
+            "slide_type":    self.slide_type,
+            "nrows":         self.nrows,
+            "ncols":         self.ncols,
+            "row_heights":   list(self.row_heights),
+            "col_widths":    list(self.col_widths),
+            "notes":         self.notes,
+            "level":         self.level,
+            "show_toc":      self.show_toc,
+            "auto_toc":      getattr(self, "_auto_toc", None),
+            "cell_defaults": cell_defaults,
+            "cells":         [c.to_dict(embed=embed) for c in self._cells],
+        }
+
+    def export(
+        self,
+        path: "str | Path",
+        *,
+        embed: bool = True,
+        compress: bool | None = None,
+    ) -> "Path":
+        """Write this slide to a JSON file (``kind="slide"``); return the path.
+
+        See :func:`montin.io.write_document` for ``compress`` semantics.
+        """
+        from montin.io import write_document
+
+        return write_document(path, "slide", self.to_dict(embed=embed), compress=compress)
+
+    @classmethod
+    def from_dict(cls, data: dict, parent: "Deck | None" = None) -> "Slide":
+        """Reconstruct a standalone slide from a :meth:`to_dict` payload.
+
+        Cell positions (col/row/span) are preserved exactly. When ``parent`` is
+        ``None`` a lightweight placeholder :class:`~montin.core.deck.Deck` is
+        created to host the slide; pass the real deck (as
+        :meth:`Deck.import_slides` does) to attach it to an existing report.
+        """
+        from montin.core.deck import CellDefaults, Deck
+
+        cd = data.get("cell_defaults")
+        # None for title/section/toc slides (which carry no cell defaults).
+        cell_defaults = CellDefaults(**cd) if cd is not None else None
+
+        if parent is None:
+            parent = Deck(title=data.get("title") or "deck")
+
+        slide = cls(
+            slide_id      = data["slide_id"],
+            title         = data.get("title", ""),
+            subtitle      = data.get("subtitle", ""),
+            slide_type    = data.get("slide_type", "slide"),
+            nrows         = data["nrows"],
+            ncols         = data["ncols"],
+            row_heights   = data.get("row_heights"),
+            col_widths    = data.get("col_widths"),
+            notes         = data.get("notes", ""),
+            cell_defaults = cell_defaults,
+            plugin_names  = parent._plugin_names,
+            parent        = parent,
+            level         = data.get("level", 1),
+            show_toc      = data.get("show_toc", False),
+        )
+        if data.get("auto_toc") is not None:
+            slide._auto_toc = data["auto_toc"]   # type: ignore[attr-defined]
+
+        for cell_dict in data.get("cells", []):
+            cell = Cell.from_dict(cell_dict)
+            slide._register_cell(cell, cell_id=cell.params.cell_id)
+        return slide
+
+    @classmethod
+    def from_file(cls, path: "str | Path", parent: "Deck | None" = None) -> "Slide":
+        """Load a slide written by :meth:`export` (plain or gzipped)."""
+        from montin.io import read_document
+
+        _kind, payload = read_document(path, "slide")
+        return cls.from_dict(payload, parent=parent)
+
+    def import_cell(
+        self,
+        path: "str | Path",
+        *,
+        col:           int | None  = None,
+        row:           int | None  = None,
+        colspan:       int | None  = None,
+        rowspan:       int | None  = None,
+        caption:       Any         = _UNSET,
+        overflow:      Any         = _UNSET,
+        copy_button:   Any         = _UNSET,
+        expand_button: Any         = _UNSET,
+        transparent:   Any         = _UNSET,
+        halign:        Any         = _UNSET,
+        valign:        Any         = _UNSET,
+        fontscale:     Any         = _UNSET,
+        cell_id:       Hashable | None = None,
+    ) -> Cell:
+        """Load a cell from a JSON file and place it on this slide.
+
+        The cell's *content* comes from the file; its *placement* is resolved
+        here just like an ``add_*`` call — ``col`` / ``row`` auto-place when
+        omitted, and any span / style / caption argument left unset falls back to
+        the value the cell was exported with. A fresh ``cell_id`` is assigned
+        unless one is given (pass an existing id to overwrite a cell in place).
+        """
+        from montin.cells.base import CellParams, _validate_placement
+        from montin.io import read_document
+
+        _kind, payload = read_document(path, "cell")
+        cell = Cell.from_dict(payload)
+        src = cell.params   # the exported placement/style, used as fallback
+
+        colspan = src.colspan if colspan is None else colspan
+        rowspan = src.rowspan if rowspan is None else rowspan
+        caption = src.caption if caption is _UNSET else caption
+        overflow      = src.overflow      if overflow      is _UNSET else overflow
+        copy_button   = src.copy_button   if copy_button   is _UNSET else copy_button
+        expand_button = src.expand_button if expand_button is _UNSET else expand_button
+        transparent   = src.transparent   if transparent   is _UNSET else transparent
+        halign        = src.halign        if halign        is _UNSET else halign
+        valign        = src.valign        if valign        is _UNSET else valign
+        fontscale     = src.fontscale     if fontscale     is _UNSET else fontscale
+
+        if cell_id is None:
+            cell_id = f"_cell-{self._next_cell_id}"
+            self._next_cell_id += 1
+
+        # Overwrite in place when the id already exists (keep DOM order stable).
+        overwrite_idx = None
+        if cell_id in self._cell_map:
+            overwrite_idx = self._cells.index(self._cell_map[cell_id])
+            self.remove_cell(cell_id=cell_id, _caller_is_cell_method=True)
+
+        col, row = self._resolve_position(col, row, colspan, rowspan)
+        _validate_placement(self, col, row, colspan, rowspan)
+
+        cell.params = CellParams(
+            col=col, row=row, cell_id=cell_id,
+            colspan=colspan, rowspan=rowspan, caption=caption,
+            overflow=overflow, copy_button=copy_button,
+            expand_button=expand_button, transparent=transparent,
+            halign=halign, valign=valign, fontscale=fontscale,
+        )
+        self._register_cell(cell, cell_id=cell_id, index=overwrite_idx)
+
+        if self.parent.autosave and self.parent.autosave_level == "cell":
+            self.parent.write(self.parent.autosave)
+        return cell
+
+    # ------------------------------------------------------------------
     # Properties
     # ------------------------------------------------------------------
 

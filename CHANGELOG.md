@@ -4,6 +4,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+- **Save & load (JSON).** Serialise a report's structure/data to JSON and load it
+  back: `cell.export()` / `slide.export()` / `deck.export_slides(by_pos=…, by_key=…)`
+  / `deck.export()`, and `slide.import_cell()` / `deck.import_slides()` /
+  `Cell.from_file()` / `Slide.from_file()` / `Deck.from_file()`, plus the
+  `to_dict()` / `from_dict()` helpers on `Cell`, `Slide`, and `Deck`. A reloaded
+  object renders identically — and reloads even without the libraries that
+  produced it (matplotlib/Plotly charts are restored from their rendered form).
+  `embed=` toggles inline media vs. file references; `compress=` (or a `.gz`
+  suffix) writes gzip, read back transparently. `Slide` and `Cell` are now
+  importable from the top level (`from montin import Slide, Cell`).
 - **Touchscreen gestures**: Sweeping change slides and pinching applies zoom.
 - **Small screen friendly toolbar and sidebar**: Toolbar buttons now collapse in
   rows when it does not fit the screen space, and sidebar hides it top title.

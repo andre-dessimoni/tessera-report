@@ -24,7 +24,20 @@ class ListCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_list.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        from montin.io import json_safe
+
+        return {"items": json_safe(self.items), "ordered": self.ordered}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(
+            items=content.get("items", []),
+            ordered=content.get("ordered", False),
+            params=params,
+        )
+
     def __repr__(self) -> str:
         return (
             f"ListCell(ID={self.params.cell_id!r}, items={self.items!r})"
@@ -46,7 +59,14 @@ class CodeCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_code.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        return {"code": self.code, "language": self.language}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(code=content["code"], language=content["language"], params=params)
+
     def __repr__(self) -> str:
         return (
             f"CodeCell(ID={self.params.cell_id!r})"
@@ -118,6 +138,34 @@ class MetricCell(Cell):
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_metric.html").render(cell=self)
 
+    def _to_content(self, *, embed: bool = True) -> dict:
+        # The raw symbol_*/color_*/lower_is_better inputs are consumed by
+        # _classify and not retained, so we serialise the *derived* fields the
+        # template actually reads and restore them directly on reload.
+        from montin.io import json_safe
+
+        return {
+            "value": json_safe(self.value),
+            "label": self.label,
+            "delta": json_safe(self.delta),
+            "delta_label": self.delta_label,
+            "delta_class": self.delta_class,
+            "delta_symbol": self.delta_symbol,
+            "delta_color": self.delta_color,
+        }
+
+    @classmethod
+    def _from_content(cls, content, params):
+        obj = cls._raw_new(params)
+        obj.value = content.get("value")
+        obj.label = content.get("label", "")
+        obj.delta = content.get("delta")
+        obj.delta_label = content.get("delta_label", "")
+        obj.delta_class = content.get("delta_class")
+        obj.delta_symbol = content.get("delta_symbol")
+        obj.delta_color = content.get("delta_color")
+        return obj
+
     def __repr__(self) -> str:
         return (
             f"MetricCell(ID={self.params.cell_id!r}, value={self.value!r}, label={self.label!r})"
@@ -138,6 +186,13 @@ class MermaidCell(Cell):
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_mermaid.html").render(cell=self)
 
+    def _to_content(self, *, embed: bool = True) -> dict:
+        return {"diagram": self.diagram}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(diagram=content["diagram"], params=params)
+
     def __repr__(self) -> str:
         return (
             f"MermaidCell(ID={self.params.cell_id!r})"
@@ -153,7 +208,14 @@ class HtmlCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_html.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        return {"content": self.content}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(content=content["content"], params=params)
+
     def __repr__(self) -> str:
         return (
             f"HtmlCell(ID={self.params.cell_id!r})"
@@ -174,7 +236,14 @@ class IframeCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_iframe.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        return {"url": self.url}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(url=content["url"], params=params)
+
     def __repr__(self) -> str:
         return (
             f"IframeCell(ID={self.params.cell_id!r}"

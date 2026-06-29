@@ -33,7 +33,18 @@ class TextCell(Cell):
 
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_text.html").render(cell=self)
-    
+
+    def _to_content(self, *, embed: bool = True) -> dict:
+        return {"content": self.content, "markdown": self.markdown}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        return cls(
+            content=content["content"],
+            params=params,
+            markdown=content.get("markdown", True),
+        )
+
     def __repr__(self) -> str:
         return (
             f"TextCell(ID={self.params.cell_id!r}, content={self.content!r})"

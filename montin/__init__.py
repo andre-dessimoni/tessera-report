@@ -16,7 +16,9 @@ Basic usage::
 
 from importlib.metadata import PackageNotFoundError, version
 
+from montin.cells import Cell
 from montin.core.deck import CellDefaults, Deck, SlideDefaults
+from montin.core.slide import Slide
 from montin.core.plugins import (
     Highlight,
     MathJax,
@@ -43,6 +45,8 @@ except PackageNotFoundError:  # running from source without installing
 
 __all__ = [
     "Deck",
+    "Slide",
+    "Cell",
     "Plugin",
     "Plugins",
     "Plotly",

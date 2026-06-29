@@ -36,6 +36,19 @@ class PlotlyCell(Cell):
     def render(self, env: "jinja2.Environment") -> str:
         return env.get_template("cell_plotly.html").render(cell=self)
 
+    def _to_content(self, *, embed: bool = True) -> dict:
+        # fig_json is already a JSON string and is all the template needs.
+        return {"fig_json": self.fig_json, "save_source": self.save_source}
+
+    @classmethod
+    def _from_content(cls, content, params):
+        # Restore fig_json directly (no plotly import / re-serialisation needed).
+        obj = cls._raw_new(params)
+        obj.fig = None
+        obj.save_source = content.get("save_source", False)
+        obj.fig_json = content["fig_json"]
+        return obj
+
     def __repr__(self) -> str:
         return (
             f"PlotlyCell(ID={self.params.cell_id!r})"
