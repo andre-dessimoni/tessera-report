@@ -6,6 +6,7 @@ Defines the ``Slide`` class and slide types (SlideType).
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Hashable
 
 if TYPE_CHECKING:
@@ -546,7 +547,7 @@ class Slide:
     @cell_method
     def add_plotly(
         self,
-        fig: "go.Figure",
+        fig: "go.Figure | str | Path",
         *,
         save_source:   bool        = False,
         col:           int | None  = None,
@@ -566,7 +567,12 @@ class Slide:
         (zoom, pan, hover tooltips) without any server round-trips.
 
         Args:
-            fig: A ``plotly.graph_objects.Figure`` instance.
+            fig: A ``plotly.graph_objects.Figure`` instance, **or** a path
+                (``str`` / ``pathlib.Path``) to an HTML file saved with
+                ``fig.write_html(...)``. The figure JSON is extracted from the
+                file and rendered as a native interactive chart (not an iframe).
+                When plotly is not installed the chart still renders from the
+                extracted JSON, but ``save_source`` then has no effect.
             save_source: If ``True``, embed the raw figure JSON alongside the
                 rendered chart so it can be recovered from the HTML.
             col: Grid column (1-based). Auto-placed when omitted.
@@ -586,6 +592,8 @@ class Slide:
                 deck's plugin list.
         """
         self._require_plugin("plotly", "add_plotly")
+        if isinstance(fig, (str, Path)):
+            return PlotlyCell.from_html(fig, _params, save_source=save_source)
         return PlotlyCell(fig=fig, params=_params, save_source=save_source)
 
     @cell_method

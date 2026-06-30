@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+- **Load a saved Plotly chart.** `slide.add_plotly(...)` now also accepts a path
+  to an HTML file produced by `fig.write_html()`: the embedded figure JSON is
+  extracted and rendered as a native interactive chart (not an iframe). Renders
+  even when plotly is not installed (the figure is restored from the file).
 - **Save & load (JSON).** Serialise a report's structure/data to JSON and load it
   back: `cell.export()` / `slide.export()` / `deck.export_slides(by_pos=…, by_key=…)`
   / `deck.export()`, and `slide.import_cell()` / `deck.import_slides()` /
