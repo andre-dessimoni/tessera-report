@@ -15,6 +15,7 @@ from montin.cells import _UNSET
 from montin.core.plugins import Plugin
 from montin.core.security import Security
 from montin.core.slide import Slide
+from montin.core.theme_options import ThemeOptions
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +99,14 @@ class Deck:
             theme overrides the CSS colour variables on top of the always-loaded
             base; pair with ``custom_css`` for finer tweaks. See the *Themes*
             guide in the docs for the full list and how to build your own.
+        theme_options (ThemeOptions | None): Structured customization on top of
+            the ``theme`` — header style/colour, subtitle, bar colours, cell
+            spacing/rounding, fonts, a footer, watermark, logo(s), and a switch to
+            hide the "Made with Montin" credit. Grouped into nested dataclasses
+            (``Header``, ``Bars``, ``Cells``, ``Fonts``, ``Footer``, ``Watermark``,
+            ``Logo``). Sits between ``theme`` and ``custom_css`` in the cascade
+            (overrides the theme; overridden by ``custom_css``). ``None`` (default)
+            applies nothing. Use ``export_css()`` to save the resulting stylesheet.
         custom_css (str | Path | None): Optional path to a custom CSS file (or an
             inline CSS string) merged last, after the theme — the place to
             override the brand variables (``--color-accent`` etc.) or any rule.
@@ -185,6 +194,7 @@ class Deck:
         date:           str                      = "",
         version:        str                      = "",
         theme:          str                      = "default",
+        theme_options:  ThemeOptions | None       = None,
         custom_css:     str | Path | None        = None,
         fontsize_scale: float                    = 1.0,
         self_contained: bool                     = True,
@@ -212,6 +222,7 @@ class Deck:
         self.date           = date or datetime.date.today().isoformat()
         self.version        = version
         self.theme          = theme
+        self.theme_options  = theme_options
         # Kept as given (no blanket Path() coercion): the resolver decides
         # whether a str is a path to a .css file or inline CSS — coercing every
         # str to Path here made inline CSS strings silently unresolvable.
@@ -454,7 +465,34 @@ class Deck:
 
         assembler = Assembler(self)
         return assembler._render()
-    
+
+    def render_css(self) -> str:
+        """Return the deck's merged stylesheet — exactly the CSS that lands in the
+        ``<style>`` tag: default base → ``theme`` → ``theme_options`` →
+        ``custom_css``.
+
+        Note: this captures the *visual* theme (palette, header, bars, cells,
+        fonts, hidden credit). The HTML-rendered ``theme_options`` features —
+        footer text, watermark and logo elements — are content, not CSS, so they
+        are driven by ``theme_options`` at render time and are not in this string.
+        """
+        from montin.utils.theme_resolver import ThemeResolver
+
+        options_css = self.theme_options.to_css() if self.theme_options else None
+        return ThemeResolver().resolve(self.theme, self.custom_css, options_css)
+
+    def export_css(self, path: str | Path) -> Path:
+        """Write :meth:`render_css` to a ``.css`` file and return the path.
+
+        The saved stylesheet can be shared, hand-edited, and loaded back into any
+        deck via ``Deck(custom_css=<path>)`` — since ``custom_css`` is last in the
+        cascade it faithfully reproduces the look.
+        """
+        out = Path(path).with_suffix(".css")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(self.render_css(), encoding="utf-8")
+        return out
+
     def write(
         self,
         filename:     str | Path | None = None,
@@ -635,6 +673,7 @@ class Deck:
             "date":           self.date,
             "version":        self.version,
             "theme":          self.theme,
+            "theme_options":  self.theme_options.to_dict() if self.theme_options else None,
             "custom_css":     custom_css,
             "fontsize_scale": self.fontsize_scale,
             "self_contained": self.self_contained,
@@ -756,6 +795,7 @@ class Deck:
             date           = data.get("date", ""),
             version        = data.get("version", ""),
             theme          = data.get("theme", "default"),
+            theme_options  = ThemeOptions.from_dict(data.get("theme_options")),
             custom_css     = data.get("custom_css"),
             fontsize_scale = data.get("fontsize_scale", 1.0),
             self_contained = data.get("self_contained", True),
@@ -843,6 +883,7 @@ class Deck:
             date=self.date,
             version=self.version,
             theme=self.theme,
+            theme_options=self.theme_options,
             custom_css=self.custom_css,
             self_contained=self.self_contained,
             plugins=self.plugins,

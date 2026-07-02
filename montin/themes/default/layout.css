@@ -29,6 +29,12 @@
   --color-text: #000000;        /* primary text                      */
   --color-text-muted: #5a5c63;  /* secondary text                    */
   --color-border: #e6e6e9;      /* hairlines, UI borders             */
+  /* Header ruler/accent colour — its own knob so ThemeOptions(header=...) can
+     recolour just the title without touching the whole accent. */
+  --header-color: var(--color-accent);
+  /* Gap between grid cells — a variable so ThemeOptions(cells=Cells(gap=...))
+     can override it. */
+  --cell-gap: 12px;
   /* Base fonts stay neutral so themes that don't set their own (ink, midnight,
      montin) keep them; the default theme swaps in Inter/Sora via .theme-default. */
   --font-sans: "Segoe UI", system-ui, sans-serif;
@@ -380,6 +386,9 @@ body.sb-collapsed {
   width: 100%;
   height: 100%;
   padding: 20px 24px 12px;
+  /* Positioning context for the ThemeOptions watermark overlay (fluid mode,
+     where .stage is display:contents). */
+  position: relative;
 }
 
 .slide.active {
@@ -421,6 +430,9 @@ body.sb-collapsed {
   padding: 20px 24px 12px;   /* matches the base .slide padding, scaled with the stage */
   transform: scale(var(--stage-sx, 1), var(--stage-sy, 1));
   transform-origin: top left;
+  /* Positioning context for the watermark overlay in fixed-size mode (here the
+     stage is the transformed box, so the overlay must anchor to it). */
+  position: relative;
 }
 
 .fixed-size #main.can-pan { cursor: grab; }
@@ -696,3 +708,71 @@ body.theme-default {
 .theme-default #toolbar {
   background: #f8f9fb;
 }
+
+/* ==================================================================
+   ThemeOptions structural CSS — footer / watermark / logo.
+   These rules only take effect when the assembler renders the matching
+   elements (i.e. when Deck(theme_options=...) configures them); the
+   colours/sizes come from ThemeOptions.to_css(). Kept in the base so
+   every theme can use them.
+   ================================================================== */
+
+/* ---- Footer (theme_options.footer) — a strip at the bottom of a slide ---- */
+.slide-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+  font-size: calc(0.72rem * var(--deck-font-scale, 1));
+  color: var(--color-text-muted);
+}
+.slide-footer.footer-left   { justify-content: flex-start; }
+.slide-footer.footer-center { justify-content: center; }
+.slide-footer.footer-right  { justify-content: flex-end; }
+
+/* ---- Watermark (theme_options.watermark) — a faint overlay ---- */
+.slide-watermark {
+  position: absolute;
+  z-index: 50;               /* above content, but non-interactive */
+  pointer-events: none;
+  opacity: var(--wm-opacity, 0.08);
+  color: var(--wm-color, var(--color-text));
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+.slide-watermark img { display: block; width: var(--wm-size, 200px); height: auto; }
+.slide-watermark.wm-text { font-size: var(--wm-size, 3rem); }
+
+.slide-watermark.wm-center       { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.slide-watermark.wm-top-left     { top: 24px; left: 28px; }
+.slide-watermark.wm-top-right    { top: 24px; right: 28px; }
+.slide-watermark.wm-bottom-left  { bottom: 24px; left: 28px; }
+.slide-watermark.wm-bottom-right { bottom: 24px; right: 28px; }
+/* Tiled — cover the slide with a repeating image (text falls back to centred). */
+.slide-watermark.wm-tiled {
+  inset: 0;
+  width: 100%; height: 100%;
+  background-image: var(--wm-tile, none);
+  background-repeat: repeat;
+  background-size: var(--wm-size, 200px);
+}
+
+/* ---- Logo (theme_options.logo) ---- */
+.deck-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+}
+.deck-logo img { display: block; height: var(--logo-height, 26px); width: auto; }
+#sidebar-header .deck-logo { max-width: 100%; }
+#toolbar .deck-logo { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+.slide-header .deck-logo-header { float: right; margin-left: 12px; }
+.slide-cover .deck-logo-cover { margin-bottom: 8px; }

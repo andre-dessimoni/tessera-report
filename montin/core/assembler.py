@@ -324,11 +324,67 @@ class Assembler:
                 "\nEmbed them (self_contained=True / bundled plugins) or remove them."
             )
 
+    def _encode_theme_image(self, src) -> str | None:
+        """Resolve a logo/watermark image to a data URI (self-contained) or leave
+        it as a path/URL. An external URL under ``block_external`` is caught later
+        by :meth:`_assert_no_external`."""
+        if src is None:
+            return None
+        if self.deck.self_contained:
+            from montin.utils.image_encoder import encode
+            try:
+                return encode(src)
+            except FileNotFoundError:
+                return str(src)
+        return str(src)
+
+    def _theme_options_context(self) -> dict | None:
+        """Flatten ``deck.theme_options`` into the template view-model for the
+        rendered features (watermark, logos, footer, credit). Images are encoded
+        here; colours/sizes come from ``ThemeOptions.to_css()``."""
+        from montin.core.theme_options import _len
+
+        opts = self.deck.theme_options
+        if opts is None:
+            return None
+
+        wm = None
+        if opts.watermark and (opts.watermark.text or opts.watermark.image):
+            w = opts.watermark
+            img = self._encode_theme_image(w.image) if w.image else None
+            wm = {
+                "mode":     "image" if img else "text",
+                "text":     w.text or "",
+                "img":      img,
+                "position": w.position,
+                "tiled":    w.position == "tiled" and img is not None,
+            }
+
+        logos: dict[str, list] = {"sidebar": [], "toolbar": [], "header": [], "cover": []}
+        for lg in opts.logos():
+            logos.setdefault(lg.placement, []).append({
+                "img":    self._encode_theme_image(lg.image) if lg.image else None,
+                "text":   lg.text or "",
+                "height": _len(lg.height),
+                "link":   lg.link,
+            })
+
+        return {
+            "watermark": wm,
+            "logos":     logos,
+            "footer":    opts.footer,
+            "credit":    opts.credit,
+        }
+
     def _render(self) -> str:
         deck = self.deck
 
-        # CSS — theme merge
-        css = ThemeResolver().resolve(deck.theme, deck.custom_css)
+        # CSS — theme merge (default → theme → theme_options → custom_css)
+        options_css = deck.theme_options.to_css() if deck.theme_options else None
+        css = ThemeResolver().resolve(deck.theme, deck.custom_css, options_css)
+
+        # ThemeOptions rendered-feature view-model (watermark/logos/footer/credit)
+        theme_ctx = self._theme_options_context()
 
         # Main JS — concatenated from the per-feature modules in montin/static/js
         main_js = _read_main_js()
@@ -385,6 +441,15 @@ class Assembler:
                 "toc_entries":    entries_for_template,
             })
 
+        # Per-slide footer text (fills {page}/{total}/{title} tokens). Done here so
+        # it is static in the HTML — correct in print and fixed-size modes.
+        if theme_ctx and theme_ctx["footer"] is not None:
+            total = len(rendered_slides)
+            for i, item in enumerate(rendered_slides, start=1):
+                item["footer_text"] = deck.theme_options.footer_text_for(
+                    i, total, item["slide"].title
+                )
+
         html = self._env.get_template("base.html").render(
             deck=deck,
             rendered_slides=rendered_slides,
@@ -395,6 +460,7 @@ class Assembler:
             plugin_assets=plugin_assets,
             plugin_opts=plugin_opts,
             security=security_ctx,
+            theme_options=theme_ctx,
         )
         trusted = [a["text"] for a in plugin_assets if a.get("mode") == "inline"]
         trusted.append(main_js)

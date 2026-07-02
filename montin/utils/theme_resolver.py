@@ -33,10 +33,15 @@ class ThemeResolver:
         self,
         theme: str,
         custom_css: Path | None = None,
+        options_css: str | None = None,
     ) -> str:
         """
         Returns a single CSS string with all components merged.
-        Hierarchy: default → theme → custom_css.
+        Hierarchy: default → theme → theme_options → custom_css.
+
+        ``options_css`` is the CSS emitted by ``ThemeOptions.to_css()``; it is
+        placed after the theme and before ``custom_css`` so structured options
+        override the theme but ``custom_css`` still wins.
         """
         from montin.exceptions import ThemeNotFoundError
 
@@ -67,7 +72,12 @@ class ThemeResolver:
                         get_theme_file(theme, filename).read_text(encoding="utf-8")
                     )
 
-        # 3. user custom_css — a path to a .css file, or an inline CSS string.
+        # 3. structured theme_options (override the theme, below custom_css).
+        if options_css:
+            parts.append("/* --- theme_options --- */")
+            parts.append(options_css)
+
+        # 4. user custom_css — a path to a .css file, or an inline CSS string.
         custom = self._load_custom_css(custom_css)
         if custom:
             parts.append("/* --- custom_css --- */")

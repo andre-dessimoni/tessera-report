@@ -30,6 +30,7 @@ _SLIDE_GENERATORS = [
     _HERE / "examples" / "structure"  / "structure.py",
     _HERE / "examples" / "links"      / "links.py",
     _HERE / "examples" / "tabulator"  / "tabulator.py",
+    _HERE / "examples" / "theme_examples" / "theme_examples.py",
 ]
 
 

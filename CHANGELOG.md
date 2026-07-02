@@ -4,6 +4,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+- **`ThemeOptions` — structured theme customization** passed as
+  `Deck(theme_options=…)`. Nested option groups (`Header`, `Bars`, `Cells`,
+  `Fonts`, `Footer`, `Watermark`, `Logo`) cover header style/colour, subtitle
+  style, sidebar/toolbar colours, cell spacing/rounding, fonts, a per-slide
+  footer (with `{page}`/`{total}`/`{title}` tokens), a text/image watermark, one
+  or more logos (sidebar/toolbar/header/cover), and a switch to hide the
+  "Made with Montin" credit. It sits between the theme and `custom_css` in the
+  cascade. Logo/watermark images embed as data URIs (offline-safe under
+  `Security(block_external=True)`). New `Deck.render_css()` / `Deck.export_css()`
+  export the whole computed stylesheet to reuse via `custom_css`. Documented in
+  the *Themes* guide with live examples.
 - **Brand themes.** New built-in themes carry the Montin palette: **`montin`**
   (Sand background / Ink text / orange Accent) and **`ink`**, its dark
   counterpart (Ink background / Sand text). The original deep-navy-with-pink-red

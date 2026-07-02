@@ -125,3 +125,10 @@ The priority order for each parameter is:
 
 Use the slide navigator (toggle the sidebar with the &#9776; button or `B`) to
 compare the centred *Results* slide with the left-aligned *Summary* slide.
+
+```{note}
+`SlideDefaults` / `CellDefaults` control **structure** (grid, placement,
+alignment). For the deck's **appearance** — header style, bar colours, cell
+spacing/rounding, fonts, a footer, watermark or logo — use `ThemeOptions`. See
+[Themes → Customizing with `ThemeOptions`](themes.md#customizing-with-themeoptions).
+```

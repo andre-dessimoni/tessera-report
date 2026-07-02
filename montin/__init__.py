@@ -29,6 +29,16 @@ from montin.core.plugins import (
     Tabulator,
 )
 from montin.core.security import Security
+from montin.core.theme_options import (
+    Bars,
+    Cells,
+    Fonts,
+    Footer,
+    Header,
+    Logo,
+    ThemeOptions,
+    Watermark,
+)
 from montin.exceptions import (
     CellPlacementError,
     MontinError,
@@ -55,6 +65,14 @@ __all__ = [
     "MathJax",
     "Tabulator",
     "Security",
+    "ThemeOptions",
+    "Header",
+    "Bars",
+    "Cells",
+    "Fonts",
+    "Footer",
+    "Watermark",
+    "Logo",
     "SlideDefaults",
     "CellDefaults",
     "MontinError",
