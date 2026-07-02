@@ -89,8 +89,18 @@ class Deck:
         author (str):   The presentation author (optional).
         date (str):     The presentation date (optional, defaults to today).
         version (str):  The presentation version (optional).
-        theme (str):
-        custom_css (str | Path | None): Optional path to a custom CSS file to include.
+        theme (str): Name of the visual theme (default ``"default"``, which
+            matches the documentation site — a clean light look; ``"docs"`` is an
+            explicit alias, ``"docs-dark"`` its dark counterpart). Other built-ins:
+            ``"montin"`` and ``"ink"`` (the brand Sand light / Ink dark look),
+            ``"midnight"`` (the original navy + pink-red look), plus ``"light"``,
+            ``"dark"``, ``"light-blue"``, ``"academic"`` and ``"sobrio"``. Each
+            theme overrides the CSS colour variables on top of the always-loaded
+            base; pair with ``custom_css`` for finer tweaks. See the *Themes*
+            guide in the docs for the full list and how to build your own.
+        custom_css (str | Path | None): Optional path to a custom CSS file (or an
+            inline CSS string) merged last, after the theme — the place to
+            override the brand variables (``--color-accent`` etc.) or any rule.
         fontsize_scale (float): Multiplier applied to every font in the
             presentation — slide content and the navigation chrome (sidebar,
             toolbar, TOC, lightbox) alike (default ``1.0``). Spacing and layout
@@ -202,7 +212,10 @@ class Deck:
         self.date           = date or datetime.date.today().isoformat()
         self.version        = version
         self.theme          = theme
-        self.custom_css     = Path(custom_css) if isinstance(custom_css, str) else custom_css
+        # Kept as given (no blanket Path() coercion): the resolver decides
+        # whether a str is a path to a .css file or inline CSS — coercing every
+        # str to Path here made inline CSS strings silently unresolvable.
+        self.custom_css     = custom_css
         self.fontsize_scale = fontsize_scale
         self.self_contained = self_contained
         self.plugins        = list(plugins)

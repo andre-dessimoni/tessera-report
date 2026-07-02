@@ -4,6 +4,26 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+- **Brand themes.** New built-in themes carry the Montin palette: **`montin`**
+  (Sand background / Ink text / orange Accent) and **`ink`**, its dark
+  counterpart (Ink background / Sand text). The original deep-navy-with-pink-red
+  look is preserved as **`midnight`**. New *Themes* guide documents the built-ins,
+  the CSS-variable system, and how to reskin a deck with `custom_css` or a custom
+  theme folder.
+
+### Changed
+- **The default theme now matches the documentation site** (a clean light look —
+  white content, grey sidebar, blue links, Inter/Sora), equivalent to `"docs"`.
+  The previous default (brand Sand) moved to `theme="montin"`.
+- **Slide-title underline spans the full header width** by default (the accent
+  ruler now reaches the right margin instead of stopping at the title text).
+- **Documentation-site themes.** `theme="docs"` and `theme="docs-dark"` render a
+  deck to match the Montin documentation site (built with Furo) — white content
+  with a grey sidebar / blue links in light, the `#131416` dark surface in dark,
+  Inter body + Sora headings — so a report can sit visually alongside your docs.
+- **Inline `custom_css` now works.** A CSS string passed to `Deck(custom_css=...)`
+  is applied inline (it was silently dropped before, being coerced to a path);
+  a path to a `.css` file still loads from disk.
 - **Load a saved Plotly chart.** `slide.add_plotly(...)` now also accepts a path
   to an HTML file produced by `fig.write_html()`: the embedded figure JSON is
   extracted and rendered as a native interactive chart (not an iframe). Renders

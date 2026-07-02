@@ -1,0 +1,44 @@
+/* ============================================================
+   montin/layout.css — the Montin brand "Sand" light theme.
+   Was the default look; now a named theme. Leans on the full brand
+   palette (Ink · Slate · Stone · Sand · Accent) with the logo-inspired
+   "Ridgeline" chrome: a Sand canvas, soft grey sidebar/toolbar, and
+   floating white content cards (see montin/slide.css).
+     Ink #0F1F2E · Slate #35546B · Stone #9AA6B2 · Sand #E9ECEF · Accent #E07A3F
+   ============================================================ */
+
+:root {
+  --color-bg: #e9ecef;          /* Sand  — page background            */
+  --color-surface: #ffffff;     /* cards, sidebar, toolbar            */
+  --color-surface2: #dce2e7;    /* inputs, hover, inline code         */
+  --color-accent: #e07a3f;      /* Accent — links, active, highlights */
+  --color-text: #0f1f2e;        /* Ink   — primary text               */
+  --color-text-muted: #35546b;  /* Slate — secondary text             */
+  --color-border: #cbd3da;      /* hairlines, dividers                */
+  --radius: 6px;
+}
+
+/* Sand chrome — sidebar & toolbar sit a shade lighter than the Sand canvas
+   (a whisper of a Stone-ward gradient gives depth), framing the bright content
+   area instead of competing with it. */
+#sidebar {
+  background: linear-gradient(180deg, #f1f3f5 0%, #e4e9ed 100%);
+  border-right: 1px solid #d3dae0;
+}
+
+#toolbar {
+  background: linear-gradient(0deg, #f1f3f5 0%, #e4e9ed 100%);
+  border-top: 1px solid #d3dae0;
+}
+
+/* Sidebar title in Ink rather than Accent — calmer, and it reserves the warm
+   Accent for the active slide (the "sun"). */
+#sidebar-header {
+  color: var(--color-text);
+}
+
+/* Soften inner sidebar dividers so the panel reads as one fluid surface. */
+#sidebar-search-wrap,
+#sidebar-fold-bar {
+  border-bottom-color: #dbe1e6;
+}

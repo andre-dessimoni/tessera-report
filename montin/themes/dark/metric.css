@@ -1,0 +1,8 @@
+/* ============================================================
+   dark/metric.css — bright delta colours for the charcoal bg.
+   The default base now ships light-background deltas, so this dark
+   theme restores the brighter green/red that read on its own bg.
+   ============================================================ */
+
+.delta-positive { color: #4ade80; }
+.delta-negative { color: #f87171; }

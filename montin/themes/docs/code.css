@@ -1,0 +1,11 @@
+/* ============================================================
+   docs/code.css — light code block (the base ships a dark one).
+   Matches the documentation site's light code surface.
+   ============================================================ */
+
+/* Fallback when highlight.js isn't loaded. */
+.hs-pre code {
+  background: #f6f8fa;
+  color: #24292e;
+  border: 1px solid var(--color-border);
+}

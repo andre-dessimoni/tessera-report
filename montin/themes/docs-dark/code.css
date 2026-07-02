@@ -1,0 +1,10 @@
+/* ============================================================
+   docs-dark/code.css — code block on the documentation dark surface.
+   ============================================================ */
+
+/* Fallback when highlight.js isn't loaded. */
+.hs-pre code {
+  background: #0f1011;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}

@@ -1,0 +1,6 @@
+/* ============================================================
+   docs/metric.css — delta colours legible on the white content bg.
+   ============================================================ */
+
+.delta-positive { color: #16a34a; }
+.delta-negative { color: #dc2626; }

@@ -1,0 +1,34 @@
+/* ============================================================
+   docs/layout.css — light theme matching the Montin documentation
+   site (built with Furo). Colour values are referenced from Furo's
+   default LIGHT palette; Furo is MIT-licensed (© Pradyun Gedam,
+   https://github.com/pradyunsg/furo). Paired with `docs-dark`.
+
+   Fonts: the docs site pairs Inter (body) with Sora (headings). We
+   prefer them here but keep a system fallback so the theme stays
+   self-contained / offline. For pixel-exact fonts, prepend a Google
+   Fonts import via custom_css:
+     @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap");
+   ============================================================ */
+
+:root {
+  --color-bg:         #ffffff;   /* content area — Furo background-primary   */
+  --color-surface:    #ffffff;   /* cards                                    */
+  --color-surface2:   #eef0f4;   /* hover, inputs, inline code               */
+  --color-accent:     #2757dd;   /* links, active item — Furo brand-content  */
+  --color-text:       #000000;   /* primary text — Furo foreground-primary   */
+  --color-text-muted: #5a5c63;   /* secondary text — Furo foreground-secondary */
+  --color-border:     #e6e6e9;   /* hairlines, UI borders — ~Furo background-border */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", "Fira Code", Consolas, monospace;
+  --radius: 5px;
+}
+
+/* Furo's signature: a soft grey sidebar/toolbar framing the white content
+   (Furo background-secondary). Overridden here since the base maps the chrome
+   to --color-surface, which is white in this theme. */
+#sidebar,
+#toolbar {
+  background: #f8f9fb;
+}

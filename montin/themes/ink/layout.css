@@ -1,0 +1,17 @@
+/* ============================================================
+   ink/layout.css — brand dark theme (Montin "Ink")
+   The dark counterpart to the default Sand theme: Ink background,
+   Sand text, Stone for muted text, Slate hairlines, Accent highlights.
+   Uses all five brand colours. Only the colour variables change; the
+   default base supplies every layout rule.
+   ============================================================ */
+
+:root {
+  --color-bg: #0f1f2e;          /* Ink   — page background            */
+  --color-surface: #17293a;     /* cards, sidebar, toolbar            */
+  --color-surface2: #20384b;    /* inputs, hover, inline code         */
+  --color-accent: #e07a3f;      /* Accent — links, active, highlights */
+  --color-text: #e9ecef;        /* Sand  — primary text               */
+  --color-text-muted: #9aa6b2;  /* Stone — secondary text             */
+  --color-border: #35546b;      /* Slate — hairlines, dividers        */
+}

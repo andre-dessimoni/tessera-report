@@ -98,6 +98,28 @@ slide.add_text(
 )
 ```
 
+## Themes
+
+Pick a built-in theme with `Deck(theme=...)`. The default matches the
+documentation site (a clean light look; `"docs-dark"` is its dark counterpart).
+The Montin brand palette lives in `"montin"` (Sand light) and `"ink"` (Ink dark);
+`"midnight"` is the original navy + pink-red theme — plus `light`, `dark`,
+`light-blue`, `academic`, and `sobrio`.
+
+```python
+deck = Deck(title="Report", theme="montin")
+```
+
+Reskin any deck by overriding the CSS colour variables via `custom_css` (an
+inline string or a `.css` file):
+
+```python
+deck = Deck(title="Report", custom_css=":root { --color-accent: #E07A3F; }")
+```
+
+See the [Themes guide](https://montin.readthedocs.io/en/latest/sections/themes.html)
+for the full list, the variable reference, and how to build your own theme.
+
 ## About the name
 
 **Montin** fuses two roots:

@@ -1,0 +1,17 @@
+/* ============================================================
+   midnight/layout.css — the original Montin look
+   Deep navy surfaces with a vivid pink-red accent. This was the
+   default theme before the brand "Sand" palette; kept as a named
+   option. Only the colour variables change; the default base
+   supplies every layout rule.
+   ============================================================ */
+
+:root {
+  --color-bg: #1a1a2e;
+  --color-surface: #16213e;
+  --color-surface2: #0f3460;
+  --color-accent: #e94560;
+  --color-text: #eaeaea;
+  --color-text-muted: #8892a4;
+  --color-border: #2a2a4a;
+}

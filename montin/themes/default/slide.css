@@ -13,7 +13,9 @@
   color: var(--color-text);
   border-bottom: 2px solid var(--color-accent);
   padding-bottom: 6px;
-  display: inline-block;
+  /* Block so the accent underline spans the full header width (to the right
+     margin) rather than stopping at the text. */
+  display: block;
 }
 
 .slide-subtitle {
@@ -202,4 +204,23 @@
   padding-top: 6px;
   font-style: italic;
   flex-shrink: 0;
+}
+
+/* ==================================================================
+   Default-look refinements — DEFAULT THEME ONLY
+   Scoped to `.theme-default` so they stay off the other themes
+   (default/ is the shared base). See default/layout.css and code.css.
+   ================================================================== */
+
+/* Sora headings / Inter body, matching the documentation site. Sora falls back
+   to the sans stack (Inter, set in layout.css) when unavailable. */
+.theme-default .slide-title,
+.theme-default .slide-cover-title,
+.theme-default .slide-type-section .slide-cover-title,
+.theme-default .metric-value,
+.theme-default .markdown-body h1,
+.theme-default .markdown-body h2,
+.theme-default .markdown-body h3 {
+  font-family: "Sora", var(--font-sans);
+  font-weight: 600;
 }

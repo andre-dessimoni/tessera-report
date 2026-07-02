@@ -1,0 +1,7 @@
+/* ============================================================
+   ink/metric.css — brighter delta colours that read on the Ink bg
+   (the default's deltas are tuned for the light Sand background).
+   ============================================================ */
+
+.delta-positive { color: #4ade80; }
+.delta-negative { color: #f87171; }

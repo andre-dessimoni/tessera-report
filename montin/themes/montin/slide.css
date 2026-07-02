@@ -1,0 +1,21 @@
+/* ============================================================
+   montin/slide.css — "Ridgeline" content styling for the brand theme:
+   floating cards and a logo-inspired cover wash.
+   ============================================================ */
+
+/* Floating cards: keep a hairline but add a soft Ink-tinted shadow, so cards
+   lift off the Sand canvas the way the logo's sun sits above the ridges. */
+.cell {
+  border-color: #dde3e8;
+  box-shadow:
+    0 1px 2px rgba(15, 31, 46, 0.04),
+    0 6px 16px rgba(15, 31, 46, 0.05);
+}
+
+/* Cover slides (title & section) get a gentle vertical wash echoing the logo:
+   a pale Sand "sky" at the top easing into a Stone-tinted base. The Accent
+   underline / section title stay the warm focal point. */
+.slide-type-title,
+.slide-type-section {
+  background: linear-gradient(180deg, #f4f6f8 0%, #e6ebef 55%, #d9e0e5 100%);
+}

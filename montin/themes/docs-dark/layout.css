@@ -1,0 +1,27 @@
+/* ============================================================
+   docs-dark/layout.css — dark theme matching the Montin documentation
+   site in dark mode (Furo). Colour values are referenced from Furo's
+   default DARK palette; Furo is MIT-licensed (© Pradyun Gedam,
+   https://github.com/pradyunsg/furo). The light counterpart is `docs`.
+
+   Fonts: Inter (body) + Sora (headings), with a system fallback so the
+   theme stays self-contained / offline. See docs/layout.css for the
+   optional Google Fonts import.
+   ============================================================ */
+
+:root {
+  --color-bg:         #131416;   /* content area — Furo background-primary   */
+  --color-surface:    #1a1c1e;   /* cards + chrome — Furo background-secondary */
+  --color-surface2:   #1e2124;   /* hover, inputs, inline code — Furo background-hover */
+  --color-accent:     #5ca5ff;   /* links, active item — Furo brand-content  */
+  --color-text:       #cfd0d0;   /* primary text — Furo foreground-primary   */
+  --color-text-muted: #9ca0a5;   /* secondary text — Furo foreground-secondary */
+  --color-border:     #303335;   /* hairlines, UI borders — Furo background-border */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", "Fira Code", Consolas, monospace;
+  --radius: 5px;
+}
+/* The chrome (sidebar/toolbar) already resolves to --color-surface (#1a1c1e),
+   matching Furo's lighter panels against the darker content area — no override
+   needed here. */

@@ -1,0 +1,6 @@
+/* ============================================================
+   docs-dark/metric.css — brighter deltas that read on the dark bg.
+   ============================================================ */
+
+.delta-positive { color: #4ade80; }
+.delta-negative { color: #f87171; }

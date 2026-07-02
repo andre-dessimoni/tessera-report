@@ -24,7 +24,7 @@
   </style>
 </head>
 <body
-  class="{% if deck.size %}fixed-size {% endif %}{% if not deck.show_sidebar %}no-sidebar {% endif %}{% if not deck.show_toolbar %}no-toolbar {% endif %}{% if deck.show_sidebar and deck.sidebar_collapsed %}sb-collapsed{% endif %}"
+  class="theme-{{ deck.theme }} {% if deck.size %}fixed-size {% endif %}{% if not deck.show_sidebar %}no-sidebar {% endif %}{% if not deck.show_toolbar %}no-toolbar {% endif %}{% if deck.show_sidebar and deck.sidebar_collapsed %}sb-collapsed{% endif %}"
   data-sb-search-scope="{{ deck.sidebar_search_scope }}"
   {% if deck.size %}
   data-width="{{ deck.size[0] }}"

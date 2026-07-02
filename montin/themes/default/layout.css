@@ -15,16 +15,25 @@
      when the toolbar wraps onto additional rows on narrow screens. */
   --toolbar-row-height: 44px;
   --toolbar-height: 44px;
-  --color-bg: #1a1a2e;
-  --color-surface: #16213e;
-  --color-surface2: #0f3460;
-  --color-accent: #e94560;
-  --color-text: #eaeaea;
-  --color-text-muted: #8892a4;
-  --color-border: #2a2a4a;
+  /* Default look = the documentation-site light theme (the `docs` theme in
+     folder form). These seven colour variables are the reskin knobs — every
+     theme overrides them on top of this base (see the "montin", "ink",
+     "docs-dark" themes), or override inline via Deck(custom_css=...).
+     Values referenced from Furo's default light palette (MIT, © Pradyun Gedam).
+     The default-only bits (grey sidebar, Inter/Sora fonts, light code block)
+     are scoped to `.theme-default` further below and in slide.css / code.css. */
+  --color-bg: #ffffff;          /* content area                       */
+  --color-surface: #ffffff;     /* cards                              */
+  --color-surface2: #eef0f4;    /* hover, inputs, inline code         */
+  --color-accent: #2757dd;      /* links, active — Furo brand-content */
+  --color-text: #000000;        /* primary text                      */
+  --color-text-muted: #5a5c63;  /* secondary text                    */
+  --color-border: #e6e6e9;      /* hairlines, UI borders             */
+  /* Base fonts stay neutral so themes that don't set their own (ink, midnight,
+     montin) keep them; the default theme swaps in Inter/Sora via .theme-default. */
   --font-sans: "Segoe UI", system-ui, sans-serif;
   --font-mono: "Fira Code", "Cascadia Code", monospace;
-  --radius: 6px;
+  --radius: 5px;
   /* Deck-wide font scaling: all font-sizes are rem (spacing/layout is px),
      so multiplying the root font-size scales every font and nothing else.
      Overridden on <html> by Deck(fontsize_scale=...). */
@@ -130,7 +139,9 @@ body.sb-no-transition #sidebar-resize-handle {
 #sidebar-search:focus { border-color: var(--color-accent); }
 #sidebar-search.sidebar-search-error {
   border-color: var(--color-accent);
-  background: rgba(233, 69, 96, 0.12);
+  /* Tint derived from whatever accent the active theme defines, so the error
+     state stays on-palette across themes instead of a fixed pink. */
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 
 /* Regex-mode toggle */
@@ -659,3 +670,29 @@ body.sb-collapsed {
 
 /* The print-only fallbacks (built on beforeprint) are hidden on screen. */
 .hs-print-table, .plotly-print { display: none; }
+
+/* ==================================================================
+   Default-look refinements — DEFAULT THEME ONLY
+   ------------------------------------------------------------------
+   default/ is the shared base loaded under every theme, so the bits
+   that are specific to the default look (and would otherwise leak onto
+   ink/midnight/montin/etc.) are scoped to `.theme-default` (the body
+   carries a `theme-<name>` class). This mirrors the `docs` theme —
+   the documentation-site light look. See also slide.css and code.css.
+   ================================================================== */
+
+/* Inter body / Sora headings, as on the docs site. Set on the body (not :root)
+   so only the default theme picks them up; the Sora heading rules live in
+   slide.css. Both fall back to the system stack when unavailable (offline-safe).
+   For pixel-exact fonts, prepend a Google Fonts @import via custom_css. */
+body.theme-default {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", "Fira Code", Consolas, monospace;
+}
+
+/* Furo's signature: a soft grey sidebar/toolbar framing the white content. */
+.theme-default #sidebar,
+.theme-default #toolbar {
+  background: #f8f9fb;
+}

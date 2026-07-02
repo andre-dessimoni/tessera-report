@@ -64,6 +64,7 @@ sections/slide-ids
 sections/links
 sections/live-editing
 sections/layout-templates
+sections/themes
 sections/save-load
 sections/security
 sections/demo

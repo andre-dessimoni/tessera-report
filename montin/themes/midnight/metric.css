@@ -1,0 +1,7 @@
+/* ============================================================
+   midnight/metric.css — bright delta colours for the dark navy bg
+   (matches the original default before the light Sand palette).
+   ============================================================ */
+
+.delta-positive { color: #4ade80; }
+.delta-negative { color: #f87171; }

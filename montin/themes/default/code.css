@@ -38,6 +38,15 @@
   padding: 1rem;
 }
 
+/* Default theme only: a light code surface (matching the docs site). The base
+   fallback above stays dark for the dark themes / montin; scoped to
+   `.theme-default` so it doesn't leak. */
+.theme-default .hs-pre code {
+  background: #f6f8fa;
+  color: #24292e;
+  border: 1px solid var(--color-border);
+}
+
 /* -- MermaidCell -- */
 .mermaid-body {
   display: flex;

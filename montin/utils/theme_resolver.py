@@ -67,13 +67,30 @@ class ThemeResolver:
                         get_theme_file(theme, filename).read_text(encoding="utf-8")
                     )
 
-        # 3. user custom_css
-        if custom_css is not None:
-            if isinstance(custom_css, Path) and custom_css.exists():
-                parts.append("/* --- custom_css --- */")
-                parts.append(custom_css.read_text(encoding="utf-8"))
-            elif isinstance(custom_css, str):
-                parts.append("/* --- custom_css (inline) --- */")
-                parts.append(custom_css)
+        # 3. user custom_css — a path to a .css file, or an inline CSS string.
+        custom = self._load_custom_css(custom_css)
+        if custom:
+            parts.append("/* --- custom_css --- */")
+            parts.append(custom)
 
         return "\n".join(parts)
+
+    @staticmethod
+    def _load_custom_css(custom_css: "str | Path | None") -> str | None:
+        """Resolve ``custom_css`` to CSS text.
+
+        A ``Path`` (or a ``str`` naming an existing file) is read from disk; any
+        other ``str`` is treated as inline CSS. Guarded so a multi-line CSS
+        string — never a valid path — doesn't raise while probing the filesystem.
+        """
+        if custom_css is None:
+            return None
+        if isinstance(custom_css, Path):
+            return custom_css.read_text(encoding="utf-8") if custom_css.exists() else None
+        try:
+            path = Path(custom_css)
+            if path.is_file():
+                return path.read_text(encoding="utf-8")
+        except (OSError, ValueError):
+            pass  # e.g. an inline CSS string is not a filesystem path
+        return custom_css
